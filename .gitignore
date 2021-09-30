@@ -1,0 +1,9 @@
+# dependencies
+/node_modules
+
+# secret
+.env
+
+# misc
+/test
+yarn.lock
