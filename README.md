@@ -1,2 +1,2 @@
 # server
-Front-end for Monoponline website
+Back-end for Monoponline website
