@@ -6,6 +6,17 @@
   "repository": "https://github.com/Monoponline/server.git",
   "author": "SkyDonald <skydonald.dev@gmail.com>",
   "license": "MIT",
+  "scripts": {
+    "build": "gulp build",
+    "watch": "gulp watch",
+    "format": "prettier --write src",
+    "start": "yarn run build && node ."
+  },
+  "prettier": {
+    "semi": true,
+    "singleQuote": true,
+    "trailingComma": "none"
+  },
   "dependencies": {
     "express": "^4.17.1",
     "socket.io": "^4.2.0",
