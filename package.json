@@ -2,7 +2,7 @@
   "name": "server",
   "version": "0.1.0",
   "description": "Back-end for Monoponline website",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
   "repository": "https://github.com/Monoponline/server.git",
   "author": "SkyDonald <skydonald.dev@gmail.com>",
   "license": "MIT",
@@ -18,6 +18,7 @@
     "trailingComma": "none"
   },
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.17.1",
     "socket.io": "^4.2.0",
     "uuid": "^8.3.2"
@@ -26,6 +27,13 @@
     "@types/express": "^4.17.13",
     "@types/node": "^16.10.2",
     "@types/uuid": "^8.3.1",
-    "socket.io-client": "^4.2.0"
+    "del": "^6.0.0",
+    "esbuild": "^0.13.3",
+    "gulp": "^4.0.2",
+    "gulp-cli": "^2.3.0",
+    "gulp-esbuild": "^0.9.0",
+    "prettier": "^2.4.1",
+    "socket.io-client": "^4.2.0",
+    "typescript": "^4.4.3"
   }
 }
