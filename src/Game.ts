@@ -76,6 +76,7 @@ export default class Game extends Eventable {
     if (this.spectators.includes(player))
       this.spectators.splice(this.spectators.indexOf(player), 1);
     delete this.socket[player];
+    if (this.players.length < 2) return this.stop();
     this.update();
   }
 
@@ -118,6 +119,16 @@ export default class Game extends Eventable {
     this.emit('start');
   }
 
+  public stop() {
+    this.started = false;
+    for (const player in this.socket) {
+      const socket = this.socket[player];
+      socket.emit('win');
+      delete this.socket[player];
+    }
+    this.emit('stop');
+  }
+
   public update() {
     for (const player in this.socket) {
       const socket = this.socket[player];
@@ -139,6 +150,17 @@ export default class Game extends Eventable {
       turn: this.getPlayerTurn(),
       id: this.id,
       started: this.started
+    } as GameState);
+  }
+
+  public defaultString() {
+    return JSON.stringify({
+      houses: [],
+      players: [],
+      spectating: 0,
+      turn: '',
+      id: this.id,
+      started: false
     } as GameState);
   }
 

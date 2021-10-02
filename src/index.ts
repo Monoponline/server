@@ -55,6 +55,10 @@ io.on('connection', (socket) => {
       socket.removeListener('player-start', playerStartListener);
       socket.removeListener('request-join-game', requestJoinGameListener);
     });
+    game.on('stop', () => {
+      games.splice(games.indexOf(game), 1);
+      socket.once('request-join-game', requestJoinGameListener);
+    });
     socket.on('leave-game', () => {
       game.leave(socket.handshake.query.username as string);
       socket.once('request-join-game', requestJoinGameListener);
