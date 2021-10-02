@@ -1,60 +1,68 @@
 export default class Player {
-    public static AVATARS = ['battleship', 'car', 'dog', 'hat', 'iron', 'shoe', 'thimble', 'wheelbarrow'];
+  public static AVATARS = [
+    'battleship',
+    'car',
+    'dog',
+    'hat',
+    'iron',
+    'shoe',
+    'thimble',
+    'wheelbarrow'
+  ];
 
-    private name: string;
-    private position: number;
-    private avatar: string;
-    private properties: number[];
-    private account: number;
+  private name: string;
+  private avatar: string;
+  private position: number = 0;
+  private properties: number[] = [];
+  private account: number = 1500;
 
-    constructor(name: string) {
-        this.name = name;
-        this.position = 0;
-    }
+  constructor(name: string) {
+    this.name = name;
+  }
 
-    public getName() {
-        return this.name;
-    }
+  public getName() {
+    return this.name;
+  }
 
-    public getPosition() {
-        return this.position;
-    }
+  public getPosition() {
+    return this.position;
+  }
 
-    public setPosition(position: number) {
-        this.position = position;
-    }
+  public setPosition(position: number) {
+    this.position = position;
+  }
 
-    public getAccount() {
-        return this.account;
-    }
+  public getAccount() {
+    return this.account;
+  }
 
-    public setAccount(account: number) {
-        this.account = account;
-    }
+  public setAccount(account: number) {
+    this.account = account;
+  }
 
-    public getAvatar() {
-        return this.avatar;
-    }
+  public getAvatar() {
+    return this.avatar;
+  }
 
-    public setAvatar(avatar: string) {
-        this.avatar = avatar;
-    }
+  public setAvatar(avatar: string) {
+    this.avatar = avatar;
+  }
 
-    public getProperties() {
-        return this.properties;
-    }
+  public getProperties() {
+    return this.properties;
+  }
 
-    public addProperty(property: number) {
-        this.properties.push(property);
-    }
+  public addProperty(property: number) {
+    this.properties.push(property);
+  }
 
-    public toJSON() {
-        return JSON.stringify({
-            name: this.name,
-            position: this.position,
-            avatar: this.avatar,
-            properties: this.properties,
-            account: this.account
-        });
-    }
+  public toJSON() {
+    return JSON.stringify({
+      name: this.name,
+      position: this.position,
+      avatar: this.avatar,
+      properties: this.properties,
+      account: this.account
+    });
+  }
 }
