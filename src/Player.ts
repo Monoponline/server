@@ -13,6 +13,8 @@ export default class Player {
   private name: string;
   private avatar: string;
   private position: number = 0;
+  private inJail: boolean = false;
+  private jailTurn: number = 0;
   private properties: number[] = [];
   private account: number = 1500;
 
@@ -54,6 +56,26 @@ export default class Player {
 
   public addProperty(property: number) {
     this.properties.push(property);
+  }
+
+  public isBroke() {
+    return this.account <= 0;
+  }
+
+  public isInJail() {
+    return this.inJail;
+  }
+
+  public getJailTurn() {
+    return this.jailTurn;
+  }
+
+  public setJailTurn(jailTurn: number) {
+    this.jailTurn = jailTurn;
+  }
+
+  public canAfford(price: number) {
+    return 0 < (this.account - price);
   }
 
   public toJSON() {

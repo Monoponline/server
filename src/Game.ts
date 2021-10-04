@@ -1,6 +1,7 @@
 import { Socket } from 'socket.io/dist/socket';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 import Player from './Player';
+import Utils from './Utils';
 import Eventable from './utils/Eventable';
 
 export default class Game extends Eventable {
@@ -37,7 +38,7 @@ export default class Game extends Eventable {
   }
 
   public getPlayerTurn() {
-    return this.getPlayerList()[this.turn];
+    return this.getPlayers()[this.turn];
   }
 
   public getPlayers() {
@@ -83,7 +84,7 @@ export default class Game extends Eventable {
   public handleDisconnect(player: Player) {
     for (const p in this.socket) {
       const socket = this.socket[p];
-      socket.emit('popup-info', `${player.getName()} left the game`);
+      socket.emit('left-game', player.getName());
       player.getProperties().forEach((property) => {
         this.houses.forEach((house) => {
           if (property === house.cell)
@@ -97,9 +98,13 @@ export default class Game extends Eventable {
 
   public getCellState(cell: number) {
     for (const player of this.players) {
-      if (player.getProperties().includes(cell)) return player.getName();
+      if (player.getProperties().includes(cell)) return player;
     }
     return null;
+  }
+
+  public getSocket(player: string) {
+    return this.socket[player];
   }
 
   public start() {
@@ -117,6 +122,34 @@ export default class Game extends Eventable {
       socket.emit('game-state', this.toString());
     }
     this.emit('start');
+    this.socket[this.getPlayerTurn().getName()].once('roll-dicer', this.diceRolled);
+  }
+
+  public diceRoll(dices: number[]) {
+    const player = this.getPlayerTurn();
+    player.setPosition(player.getPosition() + Utils.sum(...dices));
+    this.handlePlayerLand();
+    this.nextTurn();
+  }
+
+  public handlePlayerLand() {
+    const player = this.getPlayerTurn();
+    const position = player.getPosition();
+  }
+
+  public getCellHouses(position: number) {
+    const state = this.getGameState();
+    for (const house of state.houses) {
+      if (house.cell === position) return house.houses;
+    }
+    return null;
+  }
+
+  public emitToEveryone(event: string, ...args: any[]) {
+    for (const player in this.socket) {
+      const socket = this.socket[player];
+      socket.emit(event, ...args);
+    }
   }
 
   public stop() {
@@ -140,17 +173,31 @@ export default class Game extends Eventable {
     const current = this.getTurn();
     if (current < this.players.length) this.turn++;
     else this.turn = 0;
+    this.socket[this.getPlayerTurn().getName()].once('roll-dice', this.diceRolled);
+  }
+
+  public diceRolled() {
+    const dices = Utils.rollDice(2);
+    for (const player in this.socket) {
+      const socket = this.socket[player];
+      socket.emit('dice-roll', this.getPlayerTurn(), dices);
+    }
+    this.diceRoll(dices);
   }
 
   public toString() {
-    return JSON.stringify({
+    return JSON.stringify(this.getGameState());
+  }
+
+  public getGameState(): GameState {
+    return {
       houses: this.houses,
       players: this.players.map((p) => JSON.parse(p.toJSON())),
       spectating: this.spectators.length,
-      turn: this.getPlayerTurn(),
+      turn: this.getPlayerTurn().getName(),
       id: this.id,
       started: this.started
-    } as GameState);
+    };
   }
 
   public defaultString() {

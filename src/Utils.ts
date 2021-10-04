@@ -19,4 +19,21 @@ export default class Utils {
   ) {
     return typeof socket.handshake.query.username === 'string';
   }
+
+  public static sum(...num: number[]) {
+    let result = 0;
+    for (let index = 0; index < num.length; index++) {
+      const element = num[index];
+      result += element;
+    }
+    return result;
+  }
+
+  public static areEquals(...objects: any[]) {
+    for (let index = 0; index < objects.length; index++) {
+      const element = objects[index];
+      if (objects.find((o) => o !== element)) return false;
+    }
+    return true;
+  }
 }
