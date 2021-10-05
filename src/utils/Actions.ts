@@ -20,7 +20,7 @@ export default class Actions {
                     const rent = cell.rent[houses];
                     renter.setAccount(renter.getAccount() + rent);
                     player.setAccount(player.getAccount() - rent);
-                    game.emitToEveryone('paid-rent', player.getName(), renter.getName(), rent, cell.name);
+                    game.emitToEveryone('paid-rent', player.getName(), renter.getName(), rent);
                 }
                 break;
         }

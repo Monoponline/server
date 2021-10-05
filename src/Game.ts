@@ -2,6 +2,8 @@ import { Socket } from 'socket.io/dist/socket';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 import Player from './Player';
 import Utils from './Utils';
+import Actions from './utils/Actions';
+import Board from './utils/Board';
 import Eventable from './utils/Eventable';
 
 export default class Game extends Eventable {
@@ -122,19 +124,24 @@ export default class Game extends Eventable {
       socket.emit('game-state', this.toString());
     }
     this.emit('start');
-    this.socket[this.getPlayerTurn().getName()].once('roll-dicer', this.diceRolled);
+    this.socket[this.getPlayerTurn().getName()].once('roll-dice', () => this.diceRolled());
   }
 
   public diceRoll(dices: number[]) {
     const player = this.getPlayerTurn();
-    player.setPosition(player.getPosition() + Utils.sum(...dices));
-    this.handlePlayerLand();
+    const oldPos = player.getPosition();
+    let newPos = player.getPosition() + Utils.sum(...dices);
+    if (newPos > 39) newPos = newPos - 40;
+    player.setPosition(newPos);
+    this.handlePlayerLand(oldPos);
     this.nextTurn();
   }
 
-  public handlePlayerLand() {
+  public handlePlayerLand(oldPos: number) {
     const player = this.getPlayerTurn();
     const position = player.getPosition();
+    if (oldPos > position) player.setAccount(player.getAccount() + 200);
+    Actions.execute(this, Board.cells.find(cell => cell.position === position));
   }
 
   public getCellHouses(position: number) {
@@ -163,24 +170,22 @@ export default class Game extends Eventable {
   }
 
   public update() {
-    for (const player in this.socket) {
-      const socket = this.socket[player];
-      socket.emit('game-state', this.toString());
-    }
+    this.emitToEveryone('game-state', this.toString());
   }
 
   public nextTurn() {
     const current = this.getTurn();
     if (current < this.players.length) this.turn++;
     else this.turn = 0;
-    this.socket[this.getPlayerTurn().getName()].once('roll-dice', this.diceRolled);
+    this.update();
+    this.socket[this.getPlayerTurn().getName()].once('roll-dice', () => this.diceRolled());
   }
 
   public diceRolled() {
     const dices = Utils.rollDice(2);
     for (const player in this.socket) {
       const socket = this.socket[player];
-      socket.emit('dice-roll', this.getPlayerTurn(), dices);
+      socket.emit('dice-roll', this.getPlayerTurn().getName(), dices);
     }
     this.diceRoll(dices);
   }

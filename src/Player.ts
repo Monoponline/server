@@ -66,6 +66,10 @@ export default class Player {
     return this.inJail;
   }
 
+  public setInJail(inJail: boolean) {
+    this.inJail = inJail;
+  }
+
   public getJailTurn() {
     return this.jailTurn;
   }
