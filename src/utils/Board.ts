@@ -2,14 +2,14 @@ import Game from '../Game';
 import Player from '../Player';
 import Type from './Type';
 
-export default {
+const Board = {
     cells: [
         {
             name: 'Go',
             type: Type.SPECIAL,
             position: 0,
             action: (game, player) => {
-                player.setAccount(player.getAccount() + 400);
+                player.setAccount(player.getAccount() + 200);
             }
         },
         {
@@ -39,7 +39,7 @@ export default {
             position: 4,
             action: (game, player) => {
                 player.setAccount(player.getAccount() - 200);
-                game.emitToEveryone('info', `${player.getName()} a payer 200€ d'impôts.`);
+                game.emitToEveryone('paid-taxes', player.getName());
             }
         },
         {
@@ -224,6 +224,7 @@ export default {
                 player.setInJail(true);
                 player.setJailTurn(3);
                 player.setPosition(10);
+                game.emitToEveryone('player-in-jail', player.getName());
             }
         },
         {
@@ -279,7 +280,7 @@ export default {
             position: 38,
             action: (game, player) => {
                 player.setAccount(player.getAccount() - 100);
-                game.emitToEveryone('info', `${player.getName()} a payer 100€ pour la taxe de luxe.`);
+                game.emitToEveryone('paid-luxury-taxe', player.getName());
             }
         },
         {
@@ -293,179 +294,264 @@ export default {
     ],
     chanceDeck: [
         {
-            title: "Advance to go collect $200",
+            title: "Allez à la gare de Lyon. Si vous passez par la case \"Départ\" recevez 200€",
             action: (game, player) => {
-
+                const oldPos = player.getPosition();
+                player.setPosition(15);
+                game.handlePlayerLand(oldPos, 0);
+                game.emitToEveryone('player-move', player.getName(), 'Gare de Lyon');
             }
         },
         {
-            title: "You inherit $100",
+            title: "Allez en prison. Ne franchissez pas la case \"Départ\", Ne touchez pas 200€",
             action: (game, player) => {
-
+                player.setInJail(true);
+                player.setJailTurn(3);
+                player.setPosition(10);
+                game.emitToEveryone('player-in-jail', player.getName());
             }
         },
         {
-            title: "Go to Jail, Go directly to jail. Do not pass go. Do not collect $200",
+            title: "Amende pour ivresse: 20€",
             action: (game, player) => {
-
+                player.setAccount(player.getAccount() - 20);
+                game.emitToEveryone('fine', player.getName(), 20);
             }
         },
         {
-            title: "Holiday fund matures, collect $100",
+            title: "Amende pour excès de vitesse: 15€",
             action: (game, player) => {
-
+                player.setAccount(player.getAccount() - 15);
+                game.emitToEveryone('fine', player.getName(), 15);
             }
         },
         {
-            title: "Income tax refund, collect $20",
+            title: "Avancez jusqu'à la case \"Départ\"",
             action: (game, player) => {
-
+                const oldPos = player.getPosition();
+                player.setPosition(0);
+                game.handlePlayerLand(oldPos, 0);
+                game.emitToEveryone('player-move', player.getName(), 'la case "Départ"');
             }
         },
         {
-            title: "School fees. Pay $50",
+            title: "Faites des réparations dans toutes vos maisons. Versez pour chaque maison 25€. Versez pour chaque hôtel 100€.",
             action: (game, player) => {
-
+                let oldAccount = player.getAccount();
+                player.getProperties().forEach((property) => {
+                    const houses = game.getCellHouses(property);
+                    if (houses === 5) player.setAccount(player.getAccount() - 100);
+                    else player.setAccount(player.getAccount() - (houses * 25));
+                });
+                game.emitToEveryone('fine', player.getName(), oldAccount - player.getAccount());
             }
         },
         {
-            title: "Hospital Fees. Pay $100",
+            title: "Vous avez gagné le prix de mots croisés. Recevez 100€",
             action: (game, player) => {
-
+                player.setAccount(player.getAccount() + 100);
+                game.emitToEveryone('earn', player.getName(), 100);
             }
         },
         {
-            title: "Collect $25 consultancy fee",
+            title: "La banque vous verse un dividende de 50€",
             action: (game, player) => {
-
+                player.setAccount(player.getAccount() + 50);
+                game.emitToEveryone('earn', player.getName(), 50);
             }
         },
         {
-            title: "Get out of jail free. This card may be kept until needed, traded or sold.",
+            title: "Vous immeuble et votre prêt rapportent. Vous devez toucher 150€",
             action: (game, player) => {
-
+                player.setAccount(player.getAccount() + 150);
+                game.emitToEveryone('earn', player.getName(), 150);
             }
         },
         {
-            title: "Bank error in your favour. Collect $200",
+            title: "Avancez au Boulevard de la Villette. Si vous passez par la case \"Départ\" recevez 200€",
             action: (game, player) => {
-
+                const oldPos = player.getPosition();
+                player.setPosition(11);
+                game.handlePlayerLand(oldPos, 0);
+                game.emitToEveryone('player-move', player.getName(), 'Boulevard de la Villette');
             }
         },
         {
-            title: "It's your birthday collect $10 from each player",
+            title: "Rendez vous à la Rue de la Paix",
             action: (game, player) => {
-
+                const oldPos = player.getPosition();
+                player.setPosition(39);
+                game.handlePlayerLand(oldPos, 0);
+                game.emitToEveryone('player-move', player.getName(), 'Rue de la Paix');
             }
         },
         {
-            title: "Life insurance matures. Collect $100",
+            title: "Reculez de 3 cases",
             action: (game, player) => {
-
+                const oldPos = player.getPosition();
+                let newPos = player.getPosition() - 3;
+                if (newPos < 0) newPos = newPos + 40;
+                player.setPosition(newPos);
+                game.handlePlayerLand(oldPos, 0);
+                game.emitToEveryone('player-move', player.getName(), Board.cells.find((cell) => cell.position === player.getPosition())?.name);
             }
         },
         {
-            title: "From sale of stock, you get $50",
+            title: "Faites des réparations dans toutes vos maisons. Versez pour chaque maison 40€. Versez pour chaque hôtel 115€.",
             action: (game, player) => {
-
+                let oldAccount = player.getAccount();
+                player.getProperties().forEach((property) => {
+                    const houses = game.getCellHouses(property);
+                    if (houses === 5) player.setAccount(player.getAccount() - 115);
+                    else player.setAccount(player.getAccount() - (houses * 40));
+                });
+                game.emitToEveryone('fine', player.getName(), oldAccount - player.getAccount());
             }
         },
         {
-            title: "Doctor's fees. Pay $50",
+            title: "Payez pour frais de scolarité: 150€",
             action: (game, player) => {
-
+                player.setAccount(player.getAccount() - 150);
+                game.emitToEveryone('fine', player.getName(), 150);
+            }
+        },
+        {
+            title: "Vous êtes libéré de prison. Cette carte peut être conservée jusqu'à ce qu'elle soit utilisée ou vendue.",
+            action: (game, player) => {
+                player.setExitJailCards(player.getExitJailCards() + 1);
+                game.emitToEveryone('earn', player.getName(), 'une carte libéré de prison');
+            }
+        },
+        {
+            title: "Rendez vous à  l'Avenue Henri-Martin. Si vous passez par la case \"Départ\" recevez 200€",
+            action: (game, player) => {
+                const oldPos = player.getPosition();
+                player.setPosition(24);
+                game.handlePlayerLand(oldPos, 0);
+                game.emitToEveryone('player-move', player.getName(), 'Avenue Henri-Martin');
             }
         }
     ],
     communityChestDeck: [
         {
-            title: "Get out of jail free. This card may be kept until needed, traded or sold.",
+            title: "Vous êtes libéré de prison. Cette carte peut être conversée jusqu'à ce qu'elle soit utilisée ou vendue.",
             action: (game, player) => {
-
+                player.setExitJailCards(player.getExitJailCards() + 1);
+                game.emitToEveryone('earn', player.getName(), 'une carte libéré de prison');
             }
         },
         {
-            title: "Go to Jail, Go directly to jail. Do not pass go. Do not collect $200",
+            title: "Vous héritez 100€",
             action: (game, player) => {
-
+                player.setAccount(player.getAccount() + 100);
+                game.emitToEveryone('earn', player.getName(), 100);
             }
         },
         {
-            title: "Advance to the next station. If UNOWNED, you may buy it from the bank. If OWNED, pay the owner twice the rent to which they are otherwise entitled",
+            title: "Recevez votre revenu annuel 100€",
             action: (game, player) => {
-
+                player.setAccount(player.getAccount() + 100);
+                game.emitToEveryone('earn', player.getName(), 100);
             }
         },
         {
-            title: "Advance to MayFair",
+            title: "Payez l'Hôpital 100€",
             action: (game, player) => {
-
+                player.setAccount(player.getAccount() - 100);
+                game.emitToEveryone('fine', player.getName(), 100);
             }
         },
         {
-            title: "Advance to the next station. If UNOWNED, you may buy it from the bank. If OWNED, pay the owner twice the rent to which they are otherwise entitled",
+            title: "C'est votre anniversaire: chaque joueur doit vous donner 10€",
             action: (game, player) => {
-
+                game.getPlayers().forEach((p) => {
+                    p.setAccount(p.getAccount() - 10);
+                });
+                player.setAccount(player.getAccount() + (10 * game.getPlayers().length));
+                game.emitToEveryone('friend-gift', player.getName());
             }
         },
         {
-            title: "You have been elected chairman of the board, pay each player $50",
+            title: "Payer la note du Médecin 50€",
             action: (game, player) => {
-
+                player.setAccount(player.getAccount() - 50);
+                game.emitToEveryone('fine', player.getName(), 50);
             }
         },
         {
-            title: "Advance to Trafalgar Square. If you pass go collect $200",
+            title: "Retournez à Belleville",
             action: (game, player) => {
-
+                const oldPos = player.getPosition();
+                player.setPosition(1);
+                game.handlePlayerLand(oldPos, 0);
+                game.emitToEveryone('player-move', player.getName(), 'Belleville');
             }
         },
         {
-            title: "Your building loan matures, collect $150",
+            title: "Vous avez gagné le deuxième Prix ed Beauté. Recevez 10€",
             action: (game, player) => {
-
+                player.setAccount(player.getAccount() + 10);
+                game.emitToEveryone('earn', player.getName(), 10);
             }
         },
         {
-            title: "Advance to go, collect $200",
+            title: "Allez en prison. Ne franchissez pas la case \"Départ\", Ne recevez pas 200€",
             action: (game, player) => {
-
+                player.setInJail(true);
+                player.setJailTurn(3);
+                player.setPosition(10);
+                game.emitToEveryone('player-in-jail', player.getName());
             }
         },
         {
-            title: "Take a trip to king's cross station, if you pass go collect $200",
+            title: "Payez une amende de 10€ ou bien tirez une carte \"CHANCE\"",
             action: (game, player) => {
-
+                player.setAccount(player.getAccount() - 10);
+                game.emitToEveryone('fine', player.getName(), 10);
             }
         },
         {
-            title: "Speeding fine, pay $15",
+            title: "Les Contributions vous remboursent la somme de 20€",
             action: (game, player) => {
-
+                player.setAccount(player.getAccount() + 20);
+                game.emitToEveryone('earn', player.getName(), 20);
             }
         },
         {
-            title: "Advance to the nearest utility, if UNOWNED, you may buy it from the bank. If OWNED, roll the dice and pay the owner 10 times your roll",
+            title: "Placez vous sur la case \"Départ\"",
             action: (game, player) => {
-
+                const oldPos = player.getPosition();
+                player.setPosition(0);
+                game.handlePlayerLand(oldPos, 0);
+                game.emitToEveryone('player-move', player.getName(), 'la case "Départ"');
             }
         },
         {
-            title: "Make general repairs on all you property: For each house pay $25, for each hotel pay $100",
+            title: "Erreur de la banque en votre faveur. Recevez 200€",
             action: (game, player) => {
-
+                player.setAccount(player.getAccount() + 200);
+                game.emitToEveryone('earn', player.getName(), 200);
             }
         },
         {
-            title: "Go back 3 spaces",
+            title: "La vente de votre stock vous rapporte 50€",
             action: (game, player) => {
-
+                player.setAccount(player.getAccount() + 50);
+                game.emitToEveryone('earn', player.getName(), 50);
             }
         },
         {
-            title: "Advance to Pall Mall, if you pass go collect $200",
+            title: "Payez votre Police d'Assurance s'élevant à 50€",
             action: (game, player) => {
-
+                player.setAccount(player.getAccount() - 50);
+                game.emitToEveryone('fine', player.getName(), 50);
+            }
+        },
+        {
+            title: "Recevez votre intérêt sur l'emprunt à 7% 25€",
+            action: (game, player) => {
+                player.setAccount(player.getAccount() + 25);
+                game.emitToEveryone('earn', player.getName(), 25);
             }
         }
     ]
@@ -474,6 +560,8 @@ export default {
     chanceDeck: Chance[];
     communityChestDeck: Chance[];
 }
+
+export default Board;
 
 export interface Cell {
     name: string;

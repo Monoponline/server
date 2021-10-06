@@ -12,14 +12,16 @@ export default class Player {
 
   private name: string;
   private avatar: string;
-  private position: number = 0;
-  private inJail: boolean = false;
-  private jailTurn: number = 0;
-  private properties: number[] = [];
-  private account: number = 1500;
+  private position = 0;
+  private inJail = false;
+  private jailTurn = 0;
+  private exitJailCards = 0;
+  private properties = [] as number[];
+  private account = 1500;
 
   constructor(name: string) {
     this.name = name;
+    this.avatar = Player.AVATARS[Math.floor(Math.random() * Player.AVATARS.length)];
   }
 
   public getName() {
@@ -80,6 +82,26 @@ export default class Player {
 
   public canAfford(price: number) {
     return 0 < (this.account - price);
+  }
+
+  public getExitJailCards() {
+    return this.exitJailCards;
+  }
+
+  public setExitJailCards(exitJailCards: number) {
+    this.exitJailCards = exitJailCards;
+  }
+
+  public getStationsOwned() {
+    let validate = [this.properties.includes(5), this.properties.includes(15), this.properties.includes(25), this.properties.includes(35)];
+    validate = validate.filter((value) => value);
+    return validate.length;
+  }
+
+  public getUtilitiesOwned() {
+    let validate = [this.properties.includes(12), this.properties.includes(28)];
+    validate = validate.filter((value) => value);
+    return validate.length;
   }
 
   public toJSON() {

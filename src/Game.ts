@@ -7,13 +7,13 @@ import Board from './utils/Board';
 import Eventable from './utils/Eventable';
 
 export default class Game extends Eventable {
-  private takenAvatars = [];
+  private takenAvatars = [] as string[];
   private id: string;
-  private players: Player[] = [];
-  private spectators: string[] = [];
-  private started: boolean = false;
-  private turn: number = 0;
-  private houses: Houses[] = [];
+  private players = [] as Player[];
+  private spectators = [] as string[];
+  private started = false;
+  private turn = 0;
+  private houses = [] as Houses[];
   private socket: {
     [username: string]: Socket<
       DefaultEventsMap,
@@ -132,16 +132,37 @@ export default class Game extends Eventable {
     const oldPos = player.getPosition();
     let newPos = player.getPosition() + Utils.sum(...dices);
     if (newPos > 39) newPos = newPos - 40;
+    if (player.isInJail()) {
+      player.setJailTurn(player.getJailTurn() - 1);
+
+      if (player.getJailTurn() <= 0) {
+        player.setJailTurn(0);
+        player.setInJail(false);
+        this.emitToEveryone('exit-jail', player.getName());
+      } else if (player.getExitJailCards() >= 1) {
+        player.setExitJailCards(player.getExitJailCards() - 1);
+        this.emitToEveryone('used-exit-jail-card', player.getName());
+      } else {
+        newPos = 10;
+        this.emitToEveryone('is-in-jail', player.getName());
+      }
+    }
     player.setPosition(newPos);
-    this.handlePlayerLand(oldPos);
+    this.handlePlayerLand(oldPos, Utils.sum(...dices));
+    if (player.isBroke()) {
+      this.emitToEveryone('player-broke', player.getName());
+      this.players.splice(this.players.indexOf(player), 1);
+      this.turn--;
+      this.spectators.push(player.getName());
+    }
     this.nextTurn();
   }
 
-  public handlePlayerLand(oldPos: number) {
+  public handlePlayerLand(oldPos: number, dice: number) {
     const player = this.getPlayerTurn();
     const position = player.getPosition();
     if (oldPos > position) player.setAccount(player.getAccount() + 200);
-    Actions.execute(this, Board.cells.find(cell => cell.position === position));
+    Actions.execute(this, Board.cells.find(cell => cell.position === position)!, dice);
   }
 
   public getCellHouses(position: number) {
@@ -149,7 +170,7 @@ export default class Game extends Eventable {
     for (const house of state.houses) {
       if (house.cell === position) return house.houses;
     }
-    return null;
+    return 0;
   }
 
   public emitToEveryone(event: string, ...args: any[]) {
@@ -157,6 +178,11 @@ export default class Game extends Eventable {
       const socket = this.socket[player];
       socket.emit(event, ...args);
     }
+  }
+
+  public emitToUser(player: string, event: string, ...args: any[]) {
+    const socket = this.socket[player];
+    socket?.emit(event, ...args);
   }
 
   public stop() {
