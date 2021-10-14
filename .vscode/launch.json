@@ -35,7 +35,7 @@
             "type": "pwa-node"
         },
         {
-            "name": "ts-node",
+            "name": "Typescript debug",
             "type": "node",
             "request": "launch",
             "args": [

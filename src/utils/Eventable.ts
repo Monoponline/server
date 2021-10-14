@@ -7,6 +7,10 @@ export default class Eventable {
     this.eventEmitter.on(event, callback);
   }
 
+  public once(event: string, callback: (...args: any[]) => void) {
+    this.eventEmitter.once(event, callback);
+  }
+
   public emit(event: string, ...args: any[]) {
     this.eventEmitter.emit(event, ...args);
   }

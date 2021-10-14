@@ -300,6 +300,7 @@ const Board = {
                 player.setPosition(15);
                 game.handlePlayerLand(oldPos, 0);
                 game.emitToEveryone('player-move', player.getName(), 'Gare de Lyon');
+                return true;
             }
         },
         {
@@ -309,6 +310,7 @@ const Board = {
                 player.setJailTurn(3);
                 player.setPosition(10);
                 game.emitToEveryone('player-in-jail', player.getName());
+                return true;
             }
         },
         {
@@ -316,6 +318,7 @@ const Board = {
             action: (game, player) => {
                 player.setAccount(player.getAccount() - 20);
                 game.emitToEveryone('fine', player.getName(), 20);
+                return true;
             }
         },
         {
@@ -323,6 +326,7 @@ const Board = {
             action: (game, player) => {
                 player.setAccount(player.getAccount() - 15);
                 game.emitToEveryone('fine', player.getName(), 15);
+                return true;
             }
         },
         {
@@ -332,6 +336,7 @@ const Board = {
                 player.setPosition(0);
                 game.handlePlayerLand(oldPos, 0);
                 game.emitToEveryone('player-move', player.getName(), 'la case "Départ"');
+                return true;
             }
         },
         {
@@ -344,6 +349,7 @@ const Board = {
                     else player.setAccount(player.getAccount() - (houses * 25));
                 });
                 game.emitToEveryone('fine', player.getName(), oldAccount - player.getAccount());
+                return true;
             }
         },
         {
@@ -351,6 +357,7 @@ const Board = {
             action: (game, player) => {
                 player.setAccount(player.getAccount() + 100);
                 game.emitToEveryone('earn', player.getName(), 100);
+                return true;
             }
         },
         {
@@ -358,6 +365,7 @@ const Board = {
             action: (game, player) => {
                 player.setAccount(player.getAccount() + 50);
                 game.emitToEveryone('earn', player.getName(), 50);
+                return true;
             }
         },
         {
@@ -365,6 +373,7 @@ const Board = {
             action: (game, player) => {
                 player.setAccount(player.getAccount() + 150);
                 game.emitToEveryone('earn', player.getName(), 150);
+                return true;
             }
         },
         {
@@ -374,6 +383,7 @@ const Board = {
                 player.setPosition(11);
                 game.handlePlayerLand(oldPos, 0);
                 game.emitToEveryone('player-move', player.getName(), 'Boulevard de la Villette');
+                return true;
             }
         },
         {
@@ -383,6 +393,7 @@ const Board = {
                 player.setPosition(39);
                 game.handlePlayerLand(oldPos, 0);
                 game.emitToEveryone('player-move', player.getName(), 'Rue de la Paix');
+                return true;
             }
         },
         {
@@ -392,8 +403,9 @@ const Board = {
                 let newPos = player.getPosition() - 3;
                 if (newPos < 0) newPos = newPos + 40;
                 player.setPosition(newPos);
-                game.handlePlayerLand(oldPos, 0);
+                const done = game.handlePlayerLand(oldPos, 0);
                 game.emitToEveryone('player-move', player.getName(), Board.cells.find((cell) => cell.position === player.getPosition())?.name);
+                return done;
             }
         },
         {
@@ -406,6 +418,7 @@ const Board = {
                     else player.setAccount(player.getAccount() - (houses * 40));
                 });
                 game.emitToEveryone('fine', player.getName(), oldAccount - player.getAccount());
+                return true;
             }
         },
         {
@@ -413,6 +426,7 @@ const Board = {
             action: (game, player) => {
                 player.setAccount(player.getAccount() - 150);
                 game.emitToEveryone('fine', player.getName(), 150);
+                return true;
             }
         },
         {
@@ -420,6 +434,7 @@ const Board = {
             action: (game, player) => {
                 player.setExitJailCards(player.getExitJailCards() + 1);
                 game.emitToEveryone('earn', player.getName(), 'une carte libéré de prison');
+                return true;
             }
         },
         {
@@ -429,6 +444,7 @@ const Board = {
                 player.setPosition(24);
                 game.handlePlayerLand(oldPos, 0);
                 game.emitToEveryone('player-move', player.getName(), 'Avenue Henri-Martin');
+                return true;
             }
         }
     ],
@@ -438,6 +454,7 @@ const Board = {
             action: (game, player) => {
                 player.setExitJailCards(player.getExitJailCards() + 1);
                 game.emitToEveryone('earn', player.getName(), 'une carte libéré de prison');
+                return true;
             }
         },
         {
@@ -445,6 +462,7 @@ const Board = {
             action: (game, player) => {
                 player.setAccount(player.getAccount() + 100);
                 game.emitToEveryone('earn', player.getName(), 100);
+                return true;
             }
         },
         {
@@ -452,6 +470,7 @@ const Board = {
             action: (game, player) => {
                 player.setAccount(player.getAccount() + 100);
                 game.emitToEveryone('earn', player.getName(), 100);
+                return true;
             }
         },
         {
@@ -459,6 +478,7 @@ const Board = {
             action: (game, player) => {
                 player.setAccount(player.getAccount() - 100);
                 game.emitToEveryone('fine', player.getName(), 100);
+                return true;
             }
         },
         {
@@ -469,6 +489,7 @@ const Board = {
                 });
                 player.setAccount(player.getAccount() + (10 * game.getPlayers().length));
                 game.emitToEveryone('friend-gift', player.getName());
+                return true;
             }
         },
         {
@@ -476,6 +497,7 @@ const Board = {
             action: (game, player) => {
                 player.setAccount(player.getAccount() - 50);
                 game.emitToEveryone('fine', player.getName(), 50);
+                return true;
             }
         },
         {
@@ -485,6 +507,7 @@ const Board = {
                 player.setPosition(1);
                 game.handlePlayerLand(oldPos, 0);
                 game.emitToEveryone('player-move', player.getName(), 'Belleville');
+                return true;
             }
         },
         {
@@ -492,6 +515,7 @@ const Board = {
             action: (game, player) => {
                 player.setAccount(player.getAccount() + 10);
                 game.emitToEveryone('earn', player.getName(), 10);
+                return true;
             }
         },
         {
@@ -501,13 +525,29 @@ const Board = {
                 player.setJailTurn(3);
                 player.setPosition(10);
                 game.emitToEveryone('player-in-jail', player.getName());
+                return true;
             }
         },
         {
             title: "Payez une amende de 10€ ou bien tirez une carte \"CHANCE\"",
             action: (game, player) => {
-                player.setAccount(player.getAccount() - 10);
-                game.emitToEveryone('fine', player.getName(), 10);
+                game.getSocket(player.getName()).emit('choice', 'Payez une amende de 10€ ou bien tirez une carte \"CHANCE\"', ['Payer une amende', 'Tirer une carte "CHANCE"']);
+                game.getSocket(player.getName()).once('response-choice', (choice: number) => {
+                    if (choice === 0) {
+                        player.setAccount(player.getAccount() - 10);
+                        game.emitToEveryone('fine', player.getName(), 10);
+                        game.emit('done');
+                    } else if (choice === 1) {
+                        const chanceCard = Board.chanceDeck[Math.floor(Math.random() * Board.chanceDeck.length)];
+                        game.emitToUser(player.getName(), 'chance-card', chanceCard.title);
+                        if (chanceCard.action(game, player)) game.emit('done');
+                    } else {
+                        player.setAccount(player.getAccount() - 10);
+                        game.emitToEveryone('fine', player.getName(), 10);
+                        game.emit('done');
+                    }
+                });
+                return false;
             }
         },
         {
@@ -515,6 +555,7 @@ const Board = {
             action: (game, player) => {
                 player.setAccount(player.getAccount() + 20);
                 game.emitToEveryone('earn', player.getName(), 20);
+                return true;
             }
         },
         {
@@ -524,6 +565,7 @@ const Board = {
                 player.setPosition(0);
                 game.handlePlayerLand(oldPos, 0);
                 game.emitToEveryone('player-move', player.getName(), 'la case "Départ"');
+                return true;
             }
         },
         {
@@ -531,6 +573,7 @@ const Board = {
             action: (game, player) => {
                 player.setAccount(player.getAccount() + 200);
                 game.emitToEveryone('earn', player.getName(), 200);
+                return true;
             }
         },
         {
@@ -538,6 +581,7 @@ const Board = {
             action: (game, player) => {
                 player.setAccount(player.getAccount() + 50);
                 game.emitToEveryone('earn', player.getName(), 50);
+                return true;
             }
         },
         {
@@ -545,6 +589,7 @@ const Board = {
             action: (game, player) => {
                 player.setAccount(player.getAccount() - 50);
                 game.emitToEveryone('fine', player.getName(), 50);
+                return true;
             }
         },
         {
@@ -552,6 +597,7 @@ const Board = {
             action: (game, player) => {
                 player.setAccount(player.getAccount() + 25);
                 game.emitToEveryone('earn', player.getName(), 25);
+                return true;
             }
         }
     ]
@@ -575,10 +621,10 @@ export interface Cell {
 
 export interface Chance {
     title: string;
-    action: (game: Game, player: Player) => void;
+    action: (game: Game, player: Player) => boolean;
 }
 
 export interface CommunityChest {
     title: string;
-    action: (game: Game, player: Player) => void;
+    action: (game: Game, player: Player) => boolean;
 }

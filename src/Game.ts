@@ -125,6 +125,17 @@ export default class Game extends Eventable {
     }
     this.emit('start');
     this.socket[this.getPlayerTurn().getName()].once('roll-dice', () => this.diceRolled());
+    for (const player in this.socket) {
+      const socket = this.socket[player];
+      socket.on('trade-request', (json: string) => {
+        const trade = JSON.parse(json);
+        const s = this.socket[trade.player];
+        if (s) {
+          s.emit('trade-req', player, JSON.stringify(trade));
+          socket.emit('trade-req-sent');
+        }
+      });
+    }
   }
 
   public diceRoll(dices: number[]) {
@@ -132,6 +143,7 @@ export default class Game extends Eventable {
     const oldPos = player.getPosition();
     let newPos = player.getPosition() + Utils.sum(...dices);
     if (newPos > 39) newPos = newPos - 40;
+    let did = true;
     if (player.isInJail()) {
       player.setJailTurn(player.getJailTurn() - 1);
 
@@ -140,29 +152,72 @@ export default class Game extends Eventable {
         player.setInJail(false);
         this.emitToEveryone('exit-jail', player.getName());
       } else if (player.getExitJailCards() >= 1) {
-        player.setExitJailCards(player.getExitJailCards() - 1);
-        this.emitToEveryone('used-exit-jail-card', player.getName());
+        this.socket[player.getName()].emit('choice', 'Voulez vous utilisez la carte "Sortir de Prison" ?', ['Oui', 'Non']);
+        did = false;
+        this.socket[player.getName()].once('response-choice', (response: number) => {
+          if (response === 0) {
+            player.setJailTurn(0);
+            player.setInJail(false);
+            this.emitToEveryone('exit-jail', player.getName());
+            player.setExitJailCards(player.getExitJailCards() - 1);
+          }
+          player.setPosition(newPos);
+          const done = this.handlePlayerLand(oldPos, Utils.sum(...dices));
+          if (done) {
+            if (player.isBroke()) {
+              this.emitToEveryone('player-broke', player.getName());
+              this.players.splice(this.players.indexOf(player), 1);
+              this.turn--;
+              this.spectators.push(player.getName());
+            }
+            this.nextTurn();
+          } else {
+            this.once('done', () => {
+              if (player.isBroke()) {
+                this.emitToEveryone('player-broke', player.getName());
+                this.players.splice(this.players.indexOf(player), 1);
+                this.turn--;
+                this.spectators.push(player.getName());
+              }
+              this.nextTurn();
+            });
+          }
+        });
       } else {
         newPos = 10;
         this.emitToEveryone('is-in-jail', player.getName());
       }
     }
-    player.setPosition(newPos);
-    this.handlePlayerLand(oldPos, Utils.sum(...dices));
-    if (player.isBroke()) {
-      this.emitToEveryone('player-broke', player.getName());
-      this.players.splice(this.players.indexOf(player), 1);
-      this.turn--;
-      this.spectators.push(player.getName());
+    if (did) {
+      player.setPosition(newPos);
+      const done = this.handlePlayerLand(oldPos, Utils.sum(...dices));
+      if (done) {
+        if (player.isBroke()) {
+          this.emitToEveryone('player-broke', player.getName());
+          this.players.splice(this.players.indexOf(player), 1);
+          this.turn--;
+          this.spectators.push(player.getName());
+        }
+        this.nextTurn();
+      } else {
+        this.once('done', () => {
+          if (player.isBroke()) {
+            this.emitToEveryone('player-broke', player.getName());
+            this.players.splice(this.players.indexOf(player), 1);
+            this.turn--;
+            this.spectators.push(player.getName());
+          }
+          this.nextTurn();
+        });
+      }
     }
-    this.nextTurn();
   }
 
   public handlePlayerLand(oldPos: number, dice: number) {
     const player = this.getPlayerTurn();
     const position = player.getPosition();
     if (oldPos > position) player.setAccount(player.getAccount() + 200);
-    Actions.execute(this, Board.cells.find(cell => cell.position === position)!, dice);
+    return Actions.execute(this, Board.cells.find(cell => cell.position === position)!, dice);
   }
 
   public getCellHouses(position: number) {
