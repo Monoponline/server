@@ -60,6 +60,10 @@ export default class Player {
     this.properties.push(property);
   }
 
+  public removeProperty(property: number) {
+    this.properties.splice(this.properties.indexOf(property), 1);
+  }
+
   public isBroke() {
     return this.account <= 0;
   }

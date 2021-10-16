@@ -1,5 +1,6 @@
 import { Socket } from 'socket.io/dist/socket';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
+import { isBooleanObject } from 'util/types';
 import Player from './Player';
 import Utils from './Utils';
 import Actions from './utils/Actions';
@@ -133,9 +134,32 @@ export default class Game extends Eventable {
         if (s) {
           s.emit('trade-req', player, JSON.stringify(trade));
           socket.emit('trade-req-sent');
+          s.on('response-trade', (accept: boolean) => {
+            if (accept) {
+              for (const property of trade.cardToGive) {
+                this.getPlayer(player).removeProperty(property.value);
+                this.getPlayer(trade.player).addProperty(property.value);
+              }
+              for (const property of trade.cardToReceive) {
+                this.getPlayer(player).addProperty(property.value);
+                this.getPlayer(trade.player).removeProperty(property.value);
+              }
+              this.getPlayer(player).setAccount(this.getPlayer(player).getAccount() + trade.moneyToReceive);
+              this.getPlayer(trade.player).setAccount(this.getPlayer(trade.player).getAccount() - trade.moneyToReceive);
+              this.getPlayer(player).setAccount(this.getPlayer(player).getAccount() - trade.moneyToGive);
+              this.getPlayer(trade.player).setAccount(this.getPlayer(trade.player).getAccount() + trade.moneyToGive);
+              this.update();
+            } else {
+
+            }
+          });
         }
       });
     }
+  }
+
+  public getPlayer(player: string) {
+    return this.players[this.players.map((p) => p.getName()).indexOf(player)];
   }
 
   public diceRoll(dices: number[]) {
