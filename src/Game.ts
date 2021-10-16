@@ -150,7 +150,7 @@ export default class Game extends Eventable {
               this.getPlayer(trade.player).setAccount(this.getPlayer(trade.player).getAccount() + trade.moneyToGive);
               this.update();
             } else {
-
+              socket.emit('canceled-trade');
             }
           });
         }
