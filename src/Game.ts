@@ -184,6 +184,9 @@ export default class Game extends Eventable {
             player.setInJail(false);
             this.emitToEveryone('exit-jail', player.getName());
             player.setExitJailCards(player.getExitJailCards() - 1);
+          } else {
+            newPos = 10;
+            this.emitToEveryone('is-in-jail', player.getName());
           }
           player.setPosition(newPos);
           const done = this.handlePlayerLand(oldPos, Utils.sum(...dices));
