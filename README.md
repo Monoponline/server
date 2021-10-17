@@ -12,7 +12,7 @@
   </a>
 </p>
 
-> Back-end for Monponline website
+> Back-end for Monponline website using typescript and socket.io
 
 ### 🏠 [Homepage](https://github.com/Monoponline)
 
