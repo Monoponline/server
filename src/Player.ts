@@ -21,7 +21,8 @@ export default class Player {
 
   constructor(name: string) {
     this.name = name;
-    this.avatar = Player.AVATARS[Math.floor(Math.random() * Player.AVATARS.length)];
+    this.avatar =
+      Player.AVATARS[Math.floor(Math.random() * Player.AVATARS.length)];
   }
 
   public getName() {
@@ -85,7 +86,7 @@ export default class Player {
   }
 
   public canAfford(price: number) {
-    return 0 < (this.account - price);
+    return 0 < this.account - price;
   }
 
   public getExitJailCards() {
@@ -97,7 +98,12 @@ export default class Player {
   }
 
   public getStationsOwned() {
-    let validate = [this.properties.includes(5), this.properties.includes(15), this.properties.includes(25), this.properties.includes(35)];
+    let validate = [
+      this.properties.includes(5),
+      this.properties.includes(15),
+      this.properties.includes(25),
+      this.properties.includes(35)
+    ];
     validate = validate.filter((value) => value);
     return validate.length;
   }

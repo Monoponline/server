@@ -1,6 +1,5 @@
 import { Socket } from 'socket.io/dist/socket';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
-import { isBooleanObject } from 'util/types';
 import Player from './Player';
 import Utils from './Utils';
 import Actions from './utils/Actions';
@@ -125,7 +124,9 @@ export default class Game extends Eventable {
       socket.emit('game-state', this.toString());
     }
     this.emit('start');
-    this.socket[this.getPlayerTurn().getName()].once('roll-dice', () => this.diceRolled());
+    this.socket[this.getPlayerTurn().getName()].once('roll-dice', () =>
+      this.diceRolled()
+    );
     for (const player in this.socket) {
       const socket = this.socket[player];
       socket.on('trade-request', (json: string) => {
@@ -144,10 +145,18 @@ export default class Game extends Eventable {
                 this.getPlayer(player).addProperty(property.value);
                 this.getPlayer(trade.player).removeProperty(property.value);
               }
-              this.getPlayer(player).setAccount(this.getPlayer(player).getAccount() + trade.moneyToReceive);
-              this.getPlayer(trade.player).setAccount(this.getPlayer(trade.player).getAccount() - trade.moneyToReceive);
-              this.getPlayer(player).setAccount(this.getPlayer(player).getAccount() - trade.moneyToGive);
-              this.getPlayer(trade.player).setAccount(this.getPlayer(trade.player).getAccount() + trade.moneyToGive);
+              this.getPlayer(player).setAccount(
+                this.getPlayer(player).getAccount() + trade.moneyToReceive
+              );
+              this.getPlayer(trade.player).setAccount(
+                this.getPlayer(trade.player).getAccount() - trade.moneyToReceive
+              );
+              this.getPlayer(player).setAccount(
+                this.getPlayer(player).getAccount() - trade.moneyToGive
+              );
+              this.getPlayer(trade.player).setAccount(
+                this.getPlayer(trade.player).getAccount() + trade.moneyToGive
+              );
               this.update();
             } else {
               socket.emit('canceled-trade');
@@ -176,30 +185,27 @@ export default class Game extends Eventable {
         player.setInJail(false);
         this.emitToEveryone('exit-jail', player.getName());
       } else if (player.getExitJailCards() >= 1) {
-        this.socket[player.getName()].emit('choice', 'Voulez vous utilisez la carte "Sortir de Prison" ?', ['Oui', 'Non']);
+        this.socket[player.getName()].emit(
+          'choice',
+          'Voulez vous utilisez la carte "Sortir de Prison" ?',
+          ['Oui', 'Non']
+        );
         did = false;
-        this.socket[player.getName()].once('response-choice', (response: number) => {
-          if (response === 0) {
-            player.setJailTurn(0);
-            player.setInJail(false);
-            this.emitToEveryone('exit-jail', player.getName());
-            player.setExitJailCards(player.getExitJailCards() - 1);
-          } else {
-            newPos = 10;
-            this.emitToEveryone('is-in-jail', player.getName());
-          }
-          player.setPosition(newPos);
-          const done = this.handlePlayerLand(oldPos, Utils.sum(...dices));
-          if (done) {
-            if (player.isBroke()) {
-              this.emitToEveryone('player-broke', player.getName());
-              this.players.splice(this.players.indexOf(player), 1);
-              this.turn--;
-              this.spectators.push(player.getName());
+        this.socket[player.getName()].once(
+          'response-choice',
+          (response: number) => {
+            if (response === 0) {
+              player.setJailTurn(0);
+              player.setInJail(false);
+              this.emitToEveryone('exit-jail', player.getName());
+              player.setExitJailCards(player.getExitJailCards() - 1);
+            } else {
+              newPos = 10;
+              this.emitToEveryone('is-in-jail', player.getName());
             }
-            this.nextTurn();
-          } else {
-            this.once('done', () => {
+            player.setPosition(newPos);
+            const done = this.handlePlayerLand(oldPos, Utils.sum(...dices));
+            if (done) {
               if (player.isBroke()) {
                 this.emitToEveryone('player-broke', player.getName());
                 this.players.splice(this.players.indexOf(player), 1);
@@ -207,9 +213,19 @@ export default class Game extends Eventable {
                 this.spectators.push(player.getName());
               }
               this.nextTurn();
-            });
+            } else {
+              this.once('done', () => {
+                if (player.isBroke()) {
+                  this.emitToEveryone('player-broke', player.getName());
+                  this.players.splice(this.players.indexOf(player), 1);
+                  this.turn--;
+                  this.spectators.push(player.getName());
+                }
+                this.nextTurn();
+              });
+            }
           }
-        });
+        );
       } else {
         newPos = 10;
         this.emitToEveryone('is-in-jail', player.getName());
@@ -244,7 +260,11 @@ export default class Game extends Eventable {
     const player = this.getPlayerTurn();
     const position = player.getPosition();
     if (oldPos > position) player.setAccount(player.getAccount() + 200);
-    return Actions.execute(this, Board.cells.find(cell => cell.position === position)!, dice);
+    return Actions.execute(
+      this,
+      Board.cells.find((cell) => cell.position === position)!,
+      dice
+    );
   }
 
   public getCellHouses(position: number) {
@@ -286,7 +306,9 @@ export default class Game extends Eventable {
     if (current < this.players.length) this.turn++;
     else this.turn = 0;
     this.update();
-    this.socket[this.getPlayerTurn().getName()].once('roll-dice', () => this.diceRolled());
+    this.socket[this.getPlayerTurn().getName()].once('roll-dice', () =>
+      this.diceRolled()
+    );
   }
 
   public diceRolled() {
@@ -313,15 +335,15 @@ export default class Game extends Eventable {
     };
   }
 
-  public defaultString() {
-    return JSON.stringify({
+  public getDefaultState() {
+    return {
       houses: [],
       players: [],
       spectating: 0,
       turn: '',
       id: this.id,
       started: false
-    } as GameState);
+    } as GameState;
   }
 
   public canJoin() {

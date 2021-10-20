@@ -37,12 +37,12 @@ app.get('/is-username-taken', (req, res) => {
 io.on('connection', (socket) => {
   if (!Utils.isSocketValid(socket)) return socket.disconnect(true);
   takenUsername.push(socket.handshake.query.username as string);
-  socket.on('disconnect', () => {
+  socket.on('disconnect', () =>
     takenUsername.splice(
       takenUsername.indexOf(socket.handshake.query.username as string),
       1
-    );
-  });
+    )
+  );
   const requestJoinGameListener = (gameId: string) => {
     let game = games.find((g) => g.getId() === gameId);
     if (!game) {
