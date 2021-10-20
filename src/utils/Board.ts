@@ -661,11 +661,24 @@ const Board = {
         return true;
       }
     }
-  ]
+  ],
+  housesPrice: {
+    'dark-purple': 50,
+    'light-blue': 50,
+    purple: 100,
+    orange: 100,
+    red: 150,
+    yellow: 150,
+    green: 200,
+    'dark-blue': 200
+  }
 } as {
   cells: Cell[];
   chanceDeck: Chance[];
   communityChestDeck: Chance[];
+  housesPrice: {
+    [color: string]: number;
+  };
 };
 
 export default Board;

@@ -164,6 +164,43 @@ export default class Game extends Eventable {
           });
         }
       });
+      socket.on('buy-property', (cell: number) => {
+        if (
+          Board.cells
+            .filter((c) => c.color === Board.cells[cell].color)
+            .find(
+              (c) => this.getCellHouses(c.position) < this.getCellHouses(cell)
+            ) ||
+          this.getCellHouses(cell) <= 5
+        ) {
+          return socket.emit('cant-upgrade');
+        }
+        const price = Board.housesPrice[Board.cells[cell].color];
+        if (this.getPlayerTurn().getName() !== player) return;
+        if (
+          Board.cells.filter((c) => c.color === Board.cells[cell].color)
+            .length ===
+          this.getCellState(cell)
+            .getProperties()
+            .filter((p) => Board.cells[cell].color === Board.cells[p].color)
+            .length
+        )
+          return;
+        if (this.getPlayer(player).canAfford(price)) {
+          const house = this.houses.find((h) => h.cell === cell);
+          house ? house.houses++ : this.houses.push({
+            houses: 1,
+            cell
+          });
+          socket.emit('bought-house', Board.cells[cell].name);
+          this.update();
+        } else {
+          this.emitToEveryone('cant-afford', player, `${cell} maisons`);
+        }
+      });
+      socket.on('sell-property', () => {
+        // TODO
+      });
     }
   }
 
