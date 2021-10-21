@@ -171,15 +171,14 @@ export default class Game extends Eventable {
             .find(
               (c) => this.getCellHouses(c.position) < this.getCellHouses(cell)
             ) ||
-          this.getCellHouses(cell) <= 5
-        ) {
+          this.getCellHouses(cell) === 5
+        ) 
           return socket.emit('cant-upgrade');
-        }
         const price = Board.housesPrice[Board.cells[cell].color];
         if (this.getPlayerTurn().getName() !== player) return;
         if (
           Board.cells.filter((c) => c.color === Board.cells[cell].color)
-            .length ===
+            .length !==
           this.getCellState(cell)
             .getProperties()
             .filter((p) => Board.cells[cell].color === Board.cells[p].color)
@@ -188,18 +187,30 @@ export default class Game extends Eventable {
           return;
         if (this.getPlayer(player).canAfford(price)) {
           const house = this.houses.find((h) => h.cell === cell);
-          house ? house.houses++ : this.houses.push({
-            houses: 1,
-            cell
-          });
+          house
+            ? house.houses++
+            : this.houses.push({
+                houses: 1,
+                cell
+              });
+          this.getPlayer(player).setAccount(this.getPlayer(player).getAccount() - price);
           socket.emit('bought-house', Board.cells[cell].name);
           this.update();
         } else {
           this.emitToEveryone('cant-afford', player, `${cell} maisons`);
         }
       });
-      socket.on('sell-property', () => {
-        // TODO
+      socket.on('sell-property', (cell: number) => {
+        if (
+          this.getCellHouses(cell) === 5
+        ) 
+          return socket.emit('cant-sell');
+        const price = Board.housesPrice[Board.cells[cell].color] / 2;
+        if (this.getPlayerTurn().getName() !== player) return;
+        this.houses.find((h) => h.cell === cell).houses -= 1;
+        this.getPlayer(player).setAccount(this.getPlayer(player).getAccount() + price);
+        socket.emit('sold-house', Board.cells[cell].name);
+        this.update();
       });
     }
   }
