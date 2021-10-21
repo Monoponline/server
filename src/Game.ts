@@ -172,7 +172,7 @@ export default class Game extends Eventable {
               (c) => this.getCellHouses(c.position) < this.getCellHouses(cell)
             ) ||
           this.getCellHouses(cell) === 5
-        ) 
+        )
           return socket.emit('cant-upgrade');
         const price = Board.housesPrice[Board.cells[cell].color];
         if (this.getPlayerTurn().getName() !== player) return;
@@ -193,7 +193,9 @@ export default class Game extends Eventable {
                 houses: 1,
                 cell
               });
-          this.getPlayer(player).setAccount(this.getPlayer(player).getAccount() - price);
+          this.getPlayer(player).setAccount(
+            this.getPlayer(player).getAccount() - price
+          );
           socket.emit('bought-house', Board.cells[cell].name);
           this.update();
         } else {
@@ -201,14 +203,13 @@ export default class Game extends Eventable {
         }
       });
       socket.on('sell-property', (cell: number) => {
-        if (
-          this.getCellHouses(cell) === 5
-        ) 
-          return socket.emit('cant-sell');
+        if (this.getCellHouses(cell) === 5) return socket.emit('cant-sell');
         const price = Board.housesPrice[Board.cells[cell].color] / 2;
         if (this.getPlayerTurn().getName() !== player) return;
         this.houses.find((h) => h.cell === cell).houses -= 1;
-        this.getPlayer(player).setAccount(this.getPlayer(player).getAccount() + price);
+        this.getPlayer(player).setAccount(
+          this.getPlayer(player).getAccount() + price
+        );
         socket.emit('sold-house', Board.cells[cell].name);
         this.update();
       });
