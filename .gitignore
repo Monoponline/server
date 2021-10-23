@@ -10,4 +10,5 @@
 # misc
 /test
 yarn.lock
-.vscode
+/.vscode
+/logs

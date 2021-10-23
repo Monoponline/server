@@ -10,51 +10,19 @@ export default class Player {
     'wheelbarrow'
   ];
 
-  private name: string;
-  private avatar: string;
-  private position = 0;
-  private inJail = false;
-  private jailTurn = 0;
-  private exitJailCards = 0;
-  private properties = [] as number[];
-  private account = 1500;
+  public name: string;
+  public avatar: string;
+  public position = 0;
+  public inJail = false;
+  public jailTurn = 0;
+  public exitJailCards = 0;
+  public properties = [] as number[];
+  public account = 1500;
 
   constructor(name: string) {
     this.name = name;
     this.avatar =
       Player.AVATARS[Math.floor(Math.random() * Player.AVATARS.length)];
-  }
-
-  public getName() {
-    return this.name;
-  }
-
-  public getPosition() {
-    return this.position;
-  }
-
-  public setPosition(position: number) {
-    this.position = position;
-  }
-
-  public getAccount() {
-    return this.account;
-  }
-
-  public setAccount(account: number) {
-    this.account = account;
-  }
-
-  public getAvatar() {
-    return this.avatar;
-  }
-
-  public setAvatar(avatar: string) {
-    this.avatar = avatar;
-  }
-
-  public getProperties() {
-    return this.properties;
   }
 
   public addProperty(property: number) {
@@ -65,36 +33,12 @@ export default class Player {
     this.properties.splice(this.properties.indexOf(property), 1);
   }
 
-  public isBroke() {
+  public get isBroke() {
     return this.account <= 0;
-  }
-
-  public isInJail() {
-    return this.inJail;
-  }
-
-  public setInJail(inJail: boolean) {
-    this.inJail = inJail;
-  }
-
-  public getJailTurn() {
-    return this.jailTurn;
-  }
-
-  public setJailTurn(jailTurn: number) {
-    this.jailTurn = jailTurn;
   }
 
   public canAfford(price: number) {
     return 0 < this.account - price;
-  }
-
-  public getExitJailCards() {
-    return this.exitJailCards;
-  }
-
-  public setExitJailCards(exitJailCards: number) {
-    this.exitJailCards = exitJailCards;
   }
 
   public getStationsOwned() {

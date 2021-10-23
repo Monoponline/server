@@ -1,5 +1,5 @@
-import Game from '../Game';
-import Player from '../Player';
+import Game from '../game/Game';
+import Player from '../player/Player';
 import Type from './Type';
 
 const Board = {
@@ -9,7 +9,8 @@ const Board = {
       type: Type.SPECIAL,
       position: 0,
       action: (game, player) => {
-        player.setAccount(player.getAccount() + 200);
+        player.account += 200;
+        return new Promise((r) => r());
       }
     },
     {
@@ -38,8 +39,9 @@ const Board = {
       type: Type.SPECIAL,
       position: 4,
       action: (game, player) => {
-        player.setAccount(player.getAccount() - 200);
-        game.emitToEveryone('paid-taxes', player.getName());
+        player.account -= 200;
+        game.emitToEveryone('paid-taxes', player.name);
+        return new Promise((r) => r());
       }
     },
     {
@@ -80,7 +82,9 @@ const Board = {
       name: 'En Prison/Simple Visite',
       type: Type.SPECIAL,
       position: 10,
-      action: (game, player) => {}
+      action: (game, player) => {
+        return new Promise((r) => r());
+      }
     },
     {
       name: 'Boulevard de la Villette',
@@ -150,7 +154,9 @@ const Board = {
       name: 'Parc Gratuit',
       type: Type.SPECIAL,
       position: 20,
-      action: (game, player) => {}
+      action: (game, player) => {
+        return new Promise((r) => r());
+      }
     },
     {
       name: 'Avenue Matignon',
@@ -221,10 +227,11 @@ const Board = {
       type: Type.SPECIAL,
       position: 30,
       action: (game, player) => {
-        player.setInJail(true);
-        player.setJailTurn(3);
-        player.setPosition(10);
-        game.emitToEveryone('player-in-jail', player.getName());
+        player.inJail = true;
+        player.jailTurn = 3;
+        player.position = 10;
+        game.emitToEveryone('player-in-jail', player.name);
+        return new Promise((r) => r());
       }
     },
     {
@@ -279,8 +286,9 @@ const Board = {
       type: Type.SPECIAL,
       position: 38,
       action: (game, player) => {
-        player.setAccount(player.getAccount() - 100);
-        game.emitToEveryone('paid-luxury-taxe', player.getName());
+        player.account -= 100;
+        game.emitToEveryone('paid-luxury-taxe', player.name);
+        return new Promise((r) => r());
       }
     },
     {
@@ -297,190 +305,169 @@ const Board = {
       title:
         'Allez à la gare de Lyon. Si vous passez par la case "Départ" recevez 200€',
       action: (game, player) => {
-        const oldPos = player.getPosition();
-        player.setPosition(15);
+        const oldPos = player.position;
+        player.position = 15;
         game.handlePlayerLand(oldPos, 0);
-        game.emitToEveryone('player-move', player.getName(), 'Gare de Lyon');
-        return true;
+        game.emitToEveryone('player-move', player.name, 'Gare de Lyon');
+        return new Promise((r) => r());
       }
     },
     {
       title:
         'Allez en prison. Ne franchissez pas la case "Départ", Ne touchez pas 200€',
       action: (game, player) => {
-        player.setInJail(true);
-        player.setJailTurn(3);
-        player.setPosition(10);
-        game.emitToEveryone('player-in-jail', player.getName());
-        return true;
+        player.inJail = true;
+        player.jailTurn = 3;
+        player.position = 10;
+        game.emitToEveryone('player-in-jail', player.name);
+        return new Promise((r) => r());
       }
     },
     {
       title: 'Amende pour ivresse: 20€',
       action: (game, player) => {
-        player.setAccount(player.getAccount() - 20);
-        game.emitToEveryone('fine', player.getName(), 20);
-        return true;
+        player.account -= 20;
+        game.emitToEveryone('fine', player.name, 20);
+        return new Promise((r) => r());
       }
     },
     {
       title: 'Amende pour excès de vitesse: 15€',
       action: (game, player) => {
-        player.setAccount(player.getAccount() - 15);
-        game.emitToEveryone('fine', player.getName(), 15);
-        return true;
+        player.account -= 15;
+        game.emitToEveryone('fine', player.name, 15);
+        return new Promise((r) => r());
       }
     },
     {
       title: 'Avancez jusqu\'à la case "Départ"',
       action: (game, player) => {
-        const oldPos = player.getPosition();
-        player.setPosition(0);
+        const oldPos = player.position;
+        player.position = 0;
         game.handlePlayerLand(oldPos, 0);
-        game.emitToEveryone(
-          'player-move',
-          player.getName(),
-          'la case "Départ"'
-        );
-        return true;
+        game.emitToEveryone('player-move', player.name, 'la case "Départ"');
+        return new Promise((r) => r());
       }
     },
     {
       title:
         'Faites des réparations dans toutes vos maisons. Versez pour chaque maison 25€. Versez pour chaque hôtel 100€.',
       action: (game, player) => {
-        let oldAccount = player.getAccount();
-        player.getProperties().forEach((property) => {
+        let oldAccount = player.account;
+        player.properties.forEach((property) => {
           const houses = game.getCellHouses(property);
-          if (houses === 5) player.setAccount(player.getAccount() - 100);
-          else player.setAccount(player.getAccount() - houses * 25);
+          if (houses === 5) player.account -= 100;
+          else player.account -= houses * 25;
         });
-        game.emitToEveryone(
-          'fine',
-          player.getName(),
-          oldAccount - player.getAccount()
-        );
-        return true;
+        game.emitToEveryone('fine', player.name, oldAccount - player.account);
+        return new Promise((r) => r());
       }
     },
     {
       title: 'Vous avez gagné le prix de mots croisés. Recevez 100€',
       action: (game, player) => {
-        player.setAccount(player.getAccount() + 100);
-        game.emitToEveryone('earn', player.getName(), 100);
-        return true;
+        player.account += 100;
+        game.emitToEveryone('earn', player.name, 100);
+        return new Promise((r) => r());
       }
     },
     {
       title: 'La banque vous verse un dividende de 50€',
       action: (game, player) => {
-        player.setAccount(player.getAccount() + 50);
-        game.emitToEveryone('earn', player.getName(), 50);
-        return true;
+        player.account += 50;
+        game.emitToEveryone('earn', player.name, 50);
+        return new Promise((r) => r());
       }
     },
     {
       title: 'Vous immeuble et votre prêt rapportent. Vous devez toucher 150€',
       action: (game, player) => {
-        player.setAccount(player.getAccount() + 150);
-        game.emitToEveryone('earn', player.getName(), 150);
-        return true;
+        player.account += 150;
+        game.emitToEveryone('earn', player.name, 150);
+        return new Promise((r) => r());
       }
     },
     {
       title:
         'Avancez au Boulevard de la Villette. Si vous passez par la case "Départ" recevez 200€',
       action: (game, player) => {
-        const oldPos = player.getPosition();
-        player.setPosition(11);
+        const oldPos = player.position;
+        player.position = 11;
         game.handlePlayerLand(oldPos, 0);
         game.emitToEveryone(
           'player-move',
-          player.getName(),
+          player.name,
           'Boulevard de la Villette'
         );
-        return true;
+        return new Promise((r) => r());
       }
     },
     {
       title: 'Rendez vous à la Rue de la Paix',
       action: (game, player) => {
-        const oldPos = player.getPosition();
-        player.setPosition(39);
+        const oldPos = player.position;
+        player.position = 39;
         game.handlePlayerLand(oldPos, 0);
-        game.emitToEveryone('player-move', player.getName(), 'Rue de la Paix');
-        return true;
+        game.emitToEveryone('player-move', player.name, 'Rue de la Paix');
+        return new Promise((r) => r());
       }
     },
     {
       title: 'Reculez de 3 cases',
-      action: (game, player) => {
-        const oldPos = player.getPosition();
-        let newPos = player.getPosition() - 3;
+      action: async (game, player) => {
+        const oldPos = player.position;
+        let newPos = player.position - 3;
         if (newPos < 0) newPos = newPos + 40;
-        player.setPosition(newPos);
-        const done = game.handlePlayerLand(oldPos, 0);
+        player.position = newPos;
+        const done = await game.handlePlayerLand(oldPos, 0);
         game.emitToEveryone(
           'player-move',
-          player.getName(),
-          Board.cells.find((cell) => cell.position === player.getPosition())
-            ?.name
+          player.name,
+          Board.cells.find((cell) => cell.position === player.position)?.name
         );
-        return done;
+        return new Promise((r) => r());
       }
     },
     {
       title:
         'Faites des réparations dans toutes vos maisons. Versez pour chaque maison 40€. Versez pour chaque hôtel 115€.',
       action: (game, player) => {
-        let oldAccount = player.getAccount();
-        player.getProperties().forEach((property) => {
+        let oldAccount = player.account;
+        player.properties.forEach((property) => {
           const houses = game.getCellHouses(property);
-          if (houses === 5) player.setAccount(player.getAccount() - 115);
-          else player.setAccount(player.getAccount() - houses * 40);
+          if (houses === 5) player.account -= 115;
+          else player.account -= houses * 40;
         });
-        game.emitToEveryone(
-          'fine',
-          player.getName(),
-          oldAccount - player.getAccount()
-        );
-        return true;
+        game.emitToEveryone('fine', player.name, oldAccount - player.account);
+        return new Promise((r) => r());
       }
     },
     {
       title: 'Payez pour frais de scolarité: 150€',
       action: (game, player) => {
-        player.setAccount(player.getAccount() - 150);
-        game.emitToEveryone('fine', player.getName(), 150);
-        return true;
+        player.account -= 150;
+        game.emitToEveryone('fine', player.name, 150);
+        return new Promise((r) => r());
       }
     },
     {
       title:
         "Vous êtes libéré de prison. Cette carte peut être conservée jusqu'à ce qu'elle soit utilisée ou vendue.",
       action: (game, player) => {
-        player.setExitJailCards(player.getExitJailCards() + 1);
-        game.emitToEveryone(
-          'earn',
-          player.getName(),
-          'une carte libéré de prison'
-        );
-        return true;
+        player.exitJailCards += 1;
+        game.emitToEveryone('earn', player.name, 'une carte libéré de prison');
+        return new Promise((r) => r());
       }
     },
     {
       title:
         'Rendez vous à  l\'Avenue Henri-Martin. Si vous passez par la case "Départ" recevez 200€',
       action: (game, player) => {
-        const oldPos = player.getPosition();
-        player.setPosition(24);
+        const oldPos = player.position;
+        player.position = 24;
         game.handlePlayerLand(oldPos, 0);
-        game.emitToEveryone(
-          'player-move',
-          player.getName(),
-          'Avenue Henri-Martin'
-        );
-        return true;
+        game.emitToEveryone('player-move', player.name, 'Avenue Henri-Martin');
+        return new Promise((r) => r());
       }
     }
   ],
@@ -489,176 +476,161 @@ const Board = {
       title:
         "Vous êtes libéré de prison. Cette carte peut être conversée jusqu'à ce qu'elle soit utilisée ou vendue.",
       action: (game, player) => {
-        player.setExitJailCards(player.getExitJailCards() + 1);
-        game.emitToEveryone(
-          'earn',
-          player.getName(),
-          'une carte libéré de prison'
-        );
-        return true;
+        player.exitJailCards += 1;
+        game.emitToEveryone('earn', player.name, 'une carte libéré de prison');
+        return new Promise((r) => r());
       }
     },
     {
       title: 'Vous héritez 100€',
       action: (game, player) => {
-        player.setAccount(player.getAccount() + 100);
-        game.emitToEveryone('earn', player.getName(), 100);
-        return true;
+        player.account += 100;
+        game.emitToEveryone('earn', player.name, 100);
+        return new Promise((r) => r());
       }
     },
     {
       title: 'Recevez votre revenu annuel 100€',
       action: (game, player) => {
-        player.setAccount(player.getAccount() + 100);
-        game.emitToEveryone('earn', player.getName(), 100);
-        return true;
+        player.account += 100;
+        game.emitToEveryone('earn', player.name, 100);
+        return new Promise((r) => r());
       }
     },
     {
       title: "Payez l'Hôpital 100€",
       action: (game, player) => {
-        player.setAccount(player.getAccount() - 100);
-        game.emitToEveryone('fine', player.getName(), 100);
-        return true;
+        player.account -= 100;
+        game.emitToEveryone('fine', player.name, 100);
+        return new Promise((r) => r());
       }
     },
     {
       title: "C'est votre anniversaire: chaque joueur doit vous donner 10€",
       action: (game, player) => {
-        game.getPlayers().forEach((p) => {
-          p.setAccount(p.getAccount() - 10);
+        game.players.forEach((p) => {
+          p.account -= 10;
         });
-        player.setAccount(player.getAccount() + 10 * game.getPlayers().length);
-        game.emitToEveryone('friend-gift', player.getName());
-        return true;
+        player.account += 10 * game.players.length;
+        game.emitToEveryone('friend-gift', player.name);
+        return new Promise((r) => r());
       }
     },
     {
       title: 'Payer la note du Médecin 50€',
       action: (game, player) => {
-        player.setAccount(player.getAccount() - 50);
-        game.emitToEveryone('fine', player.getName(), 50);
-        return true;
+        player.account -= 50;
+        game.emitToEveryone('fine', player.name, 50);
+        return new Promise((r) => r());
       }
     },
     {
       title: 'Retournez à Belleville',
       action: (game, player) => {
-        const oldPos = player.getPosition();
-        player.setPosition(1);
+        const oldPos = player.position;
+        player.position = 1;
         game.handlePlayerLand(oldPos, 0);
-        game.emitToEveryone('player-move', player.getName(), 'Belleville');
-        return true;
+        game.emitToEveryone('player-move', player.name, 'Belleville');
+        return new Promise((r) => r());
       }
     },
     {
       title: 'Vous avez gagné le deuxième Prix ed Beauté. Recevez 10€',
       action: (game, player) => {
-        player.setAccount(player.getAccount() + 10);
-        game.emitToEveryone('earn', player.getName(), 10);
-        return true;
+        player.account += 10;
+        game.emitToEveryone('earn', player.name, 10);
+        return new Promise((r) => r());
       }
     },
     {
       title:
         'Allez en prison. Ne franchissez pas la case "Départ", Ne recevez pas 200€',
       action: (game, player) => {
-        player.setInJail(true);
-        player.setJailTurn(3);
-        player.setPosition(10);
-        game.emitToEveryone('player-in-jail', player.getName());
-        return true;
+        player.inJail = true;
+        player.jailTurn = 3;
+        player.position = 10;
+        game.emitToEveryone('player-in-jail', player.name);
+        return new Promise((r) => r());
       }
     },
     {
       title: 'Payez une amende de 10€ ou bien tirez une carte "CHANCE"',
-      action: (game, player) => {
-        game
-          .getSocket(player.getName())
-          .emit(
-            'choice',
-            'Payez une amende de 10€ ou bien tirez une carte "CHANCE"',
-            ['Payer une amende', 'Tirer une carte "CHANCE"']
-          );
-        game
-          .getSocket(player.getName())
-          .once('response-choice', (choice: number) => {
-            if (choice === 0) {
-              player.setAccount(player.getAccount() - 10);
-              game.emitToEveryone('fine', player.getName(), 10);
-              game.emit('done');
-            } else if (choice === 1) {
-              const chanceCard =
-                Board.chanceDeck[
-                  Math.floor(Math.random() * Board.chanceDeck.length)
-                ];
-              game.emitToUser(
-                player.getName(),
-                'chance-card',
-                chanceCard.title
+      action: async (game, player) => {
+        return new Promise((r) => {
+            game.socket[player.name].emit(
+                'choice',
+                'Payez une amende de 10€ ou bien tirez une carte "CHANCE"',
+                ['Payer une amende', 'Tirer une carte "CHANCE"']
               );
-              if (chanceCard.action(game, player)) game.emit('done');
-            } else {
-              player.setAccount(player.getAccount() - 10);
-              game.emitToEveryone('fine', player.getName(), 10);
-              game.emit('done');
-            }
-          });
-        return false;
+              game.socket[player.name].once('response-choice', (choice: number) => {
+                if (choice === 0) {
+                  player.account -= 10;
+                  game.emitToEveryone('fine', player.name, 10);
+                  r()
+                } else if (choice === 1) {
+                  const chanceCard =
+                    Board.chanceDeck[
+                      Math.floor(Math.random() * Board.chanceDeck.length)
+                    ];
+                  game.emitToUser(player.name, 'chance-card', chanceCard.title);
+                  chanceCard.action(game, player).then(r);
+                } else {
+                  player.account -= 10;
+                  game.emitToEveryone('fine', player.name, 10);
+                  r()
+                }
+              });
+        });
       }
     },
     {
       title: 'Les Contributions vous remboursent la somme de 20€',
       action: (game, player) => {
-        player.setAccount(player.getAccount() + 20);
-        game.emitToEveryone('earn', player.getName(), 20);
-        return true;
+        player.account += 20;
+        game.emitToEveryone('earn', player.name, 20);
+        return new Promise((r) => r());
       }
     },
     {
       title: 'Placez vous sur la case "Départ"',
       action: (game, player) => {
-        const oldPos = player.getPosition();
-        player.setPosition(0);
+        const oldPos = player.position;
+        player.position = 0;
         game.handlePlayerLand(oldPos, 0);
-        game.emitToEveryone(
-          'player-move',
-          player.getName(),
-          'la case "Départ"'
-        );
-        return true;
+        game.emitToEveryone('player-move', player.name, 'la case "Départ"');
+        return new Promise((r) => r());
       }
     },
     {
       title: 'Erreur de la banque en votre faveur. Recevez 200€',
       action: (game, player) => {
-        player.setAccount(player.getAccount() + 200);
-        game.emitToEveryone('earn', player.getName(), 200);
-        return true;
+        player.account += 200;
+        game.emitToEveryone('earn', player.name, 200);
+        return new Promise((r) => r());
       }
     },
     {
       title: 'La vente de votre stock vous rapporte 50€',
       action: (game, player) => {
-        player.setAccount(player.getAccount() + 50);
-        game.emitToEveryone('earn', player.getName(), 50);
-        return true;
+        player.account += 50;
+        game.emitToEveryone('earn', player.name, 50);
+        return new Promise((r) => r());
       }
     },
     {
       title: "Payez votre Police d'Assurance s'élevant à 50€",
       action: (game, player) => {
-        player.setAccount(player.getAccount() - 50);
-        game.emitToEveryone('fine', player.getName(), 50);
-        return true;
+        player.account -= 50;
+        game.emitToEveryone('fine', player.name, 50);
+        return new Promise((r) => r());
       }
     },
     {
       title: "Recevez votre intérêt sur l'emprunt à 7% 25€",
       action: (game, player) => {
-        player.setAccount(player.getAccount() + 25);
-        game.emitToEveryone('earn', player.getName(), 25);
-        return true;
+        player.account += 25;
+        game.emitToEveryone('earn', player.name, 25);
+        return new Promise((r) => r());
       }
     }
   ],
@@ -690,15 +662,15 @@ export interface Cell {
   color?: string;
   rent?: number[];
   price?: number;
-  action?: (game: Game, player: Player) => void;
+  action?: (game: Game, player: Player) => Promise<void>;
 }
 
 export interface Chance {
   title: string;
-  action: (game: Game, player: Player) => boolean;
+  action: (game: Game, player: Player) => Promise<void>;
 }
 
 export interface CommunityChest {
   title: string;
-  action: (game: Game, player: Player) => boolean;
+  action: (game: Game, player: Player) => Promise<void>;
 }

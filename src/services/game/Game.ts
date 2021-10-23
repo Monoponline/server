@@ -1,20 +1,20 @@
 import { Socket } from 'socket.io/dist/socket';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
-import Player from './Player';
-import Utils from './Utils';
-import Actions from './utils/Actions';
-import Board from './utils/Board';
-import Eventable from './utils/Eventable';
+import Utils from '../../utils/Utils';
+import Eventable from '../../utils/Eventable';
+import Board from '../board/Board';
+import BoardService from '../board/BoardService';
+import Player from '../player/Player';
 
 export default class Game extends Eventable {
-  private takenAvatars = [] as string[];
-  private id: string;
-  private players = [] as Player[];
-  private spectators = [] as string[];
-  private started = false;
-  private turn = 0;
-  private houses = [] as Houses[];
-  private socket: {
+  public takenAvatars = [] as string[];
+  public id: string;
+  public players = [] as Player[];
+  public spectators = [] as string[];
+  public started = false;
+  public turn = 0;
+  public houses = [] as Houses[];
+  public socket: {
     [username: string]: Socket<
       DefaultEventsMap,
       DefaultEventsMap,
@@ -27,28 +27,16 @@ export default class Game extends Eventable {
     this.id = id;
   }
 
-  public getId() {
-    return this.id;
-  }
-
-  public isStarted() {
-    return this.started;
-  }
-
   public getTurn() {
     return this.turn + 1;
   }
 
   public getPlayerTurn() {
-    return this.getPlayers()[this.turn];
-  }
-
-  public getPlayers() {
-    return this.players;
+    return this.players[this.turn];
   }
 
   public getPlayerList() {
-    return this.players.map((p) => p.getName());
+    return this.players.map((p) => p.name);
   }
 
   public join(
@@ -56,7 +44,7 @@ export default class Game extends Eventable {
     socket: Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap>
   ) {
     if (this.getPlayerList().includes(player)) return;
-    if (this.players.length < 4 && !this.isStarted()) {
+    if (this.players.length < 4 && !this.started) {
       this.players.push(new Player(player));
       socket.emit('joined-game', this.id);
     } else {
@@ -65,16 +53,13 @@ export default class Game extends Eventable {
     }
     this.socket[player] = socket;
     this.update();
-    if (this.players.length === 4) {
-      this.start();
-    }
+    if (this.players.length === 4) this.start();
   }
 
   public leave(player: string) {
     const isAPlayer = this.getPlayerList().includes(player);
-    if (this.started && isAPlayer) {
+    if (this.started && isAPlayer)
       this.handleDisconnect(this.players[this.getPlayerList().indexOf(player)]);
-    }
     if (isAPlayer) this.players.splice(this.getPlayerList().indexOf(player), 1);
     if (this.spectators.includes(player))
       this.spectators.splice(this.spectators.indexOf(player), 1);
@@ -86,8 +71,8 @@ export default class Game extends Eventable {
   public handleDisconnect(player: Player) {
     for (const p in this.socket) {
       const socket = this.socket[p];
-      socket.emit('left-game', player.getName());
-      player.getProperties().forEach((property) => {
+      socket.emit('left-game', player.name);
+      player.properties.forEach((property) => {
         this.houses.forEach((house) => {
           if (property === house.cell)
             delete this.houses[
@@ -100,13 +85,9 @@ export default class Game extends Eventable {
 
   public getCellState(cell: number) {
     for (const player of this.players) {
-      if (player.getProperties().includes(cell)) return player;
+      if (player.properties.includes(cell)) return player;
     }
     return null;
-  }
-
-  public getSocket(player: string) {
-    return this.socket[player];
   }
 
   public start() {
@@ -117,14 +98,14 @@ export default class Game extends Eventable {
       );
       const avatar = avatars[Math.floor(Math.random() * avatars.length)];
       this.takenAvatars.push(avatar);
-      player.setAvatar(avatar);
+      player.avatar = avatar;
     }
     for (const player in this.socket) {
       const socket = this.socket[player];
       socket.emit('game-state', this.toString());
     }
     this.emit('start');
-    this.socket[this.getPlayerTurn().getName()].once('roll-dice', () =>
+    this.socket[this.getPlayerTurn().name].once('roll-dice', () =>
       this.diceRolled()
     );
     for (const player in this.socket) {
@@ -145,18 +126,14 @@ export default class Game extends Eventable {
                 this.getPlayer(player).addProperty(property.value);
                 this.getPlayer(trade.player).removeProperty(property.value);
               }
-              this.getPlayer(player).setAccount(
-                this.getPlayer(player).getAccount() + trade.moneyToReceive
-              );
-              this.getPlayer(trade.player).setAccount(
-                this.getPlayer(trade.player).getAccount() - trade.moneyToReceive
-              );
-              this.getPlayer(player).setAccount(
-                this.getPlayer(player).getAccount() - trade.moneyToGive
-              );
-              this.getPlayer(trade.player).setAccount(
-                this.getPlayer(trade.player).getAccount() + trade.moneyToGive
-              );
+              this.getPlayer(player).account =
+                this.getPlayer(player).account + trade.moneyToReceive;
+              this.getPlayer(trade.player).account =
+                this.getPlayer(trade.player).account - trade.moneyToReceive;
+              this.getPlayer(player).account =
+                this.getPlayer(player).account - trade.moneyToGive;
+              this.getPlayer(trade.player).account =
+                this.getPlayer(trade.player).account + trade.moneyToGive;
               this.update();
             } else {
               socket.emit('canceled-trade');
@@ -175,14 +152,13 @@ export default class Game extends Eventable {
         )
           return socket.emit('cant-upgrade');
         const price = Board.housesPrice[Board.cells[cell].color];
-        if (this.getPlayerTurn().getName() !== player) return;
+        if (this.getPlayerTurn().name !== player) return;
         if (
           Board.cells.filter((c) => c.color === Board.cells[cell].color)
             .length !==
-          this.getCellState(cell)
-            .getProperties()
-            .filter((p) => Board.cells[cell].color === Board.cells[p].color)
-            .length
+          this.getCellState(cell).properties.filter(
+            (p) => Board.cells[cell].color === Board.cells[p].color
+          ).length
         )
           return;
         if (this.getPlayer(player).canAfford(price)) {
@@ -193,9 +169,8 @@ export default class Game extends Eventable {
                 houses: 1,
                 cell
               });
-          this.getPlayer(player).setAccount(
-            this.getPlayer(player).getAccount() - price
-          );
+          this.getPlayer(player).account =
+            this.getPlayer(player).account - price;
           socket.emit('bought-house', Board.cells[cell].name);
           this.update();
         } else {
@@ -203,13 +178,11 @@ export default class Game extends Eventable {
         }
       });
       socket.on('sell-property', (cell: number) => {
-        if (this.getCellHouses(cell) === 5) return socket.emit('cant-sell');
+        if (this.getCellHouses(cell) === 0) return socket.emit('cant-sell');
         const price = Board.housesPrice[Board.cells[cell].color] / 2;
-        if (this.getPlayerTurn().getName() !== player) return;
+        if (this.getPlayerTurn().name !== player) return;
         this.houses.find((h) => h.cell === cell).houses -= 1;
-        this.getPlayer(player).setAccount(
-          this.getPlayer(player).getAccount() + price
-        );
+        this.getPlayer(player).account = this.getPlayer(player).account + price;
         socket.emit('sold-house', Board.cells[cell].name);
         this.update();
       });
@@ -217,87 +190,72 @@ export default class Game extends Eventable {
   }
 
   public getPlayer(player: string) {
-    return this.players[this.players.map((p) => p.getName()).indexOf(player)];
+    return this.players[this.players.map((p) => p.name).indexOf(player)];
   }
 
-  public diceRoll(dices: number[]) {
+  public async diceRoll(dices: number[]) {
     const player = this.getPlayerTurn();
-    const oldPos = player.getPosition();
-    let newPos = player.getPosition() + Utils.sum(...dices);
+    const oldPos = player.position;
+    let newPos = player.position + Utils.sum(...dices);
     if (newPos > 39) newPos = newPos - 40;
     let did = true;
-    if (player.isInJail()) {
-      player.setJailTurn(player.getJailTurn() - 1);
+    if (player.inJail) {
+      player.jailTurn -= 1;
 
-      if (player.getJailTurn() <= 0) {
-        player.setJailTurn(0);
-        player.setInJail(false);
-        this.emitToEveryone('exit-jail', player.getName());
-      } else if (player.getExitJailCards() >= 1) {
-        this.socket[player.getName()].emit(
+      if (player.jailTurn <= 0) {
+        player.jailTurn = 0;
+        player.inJail = false;
+        this.emitToEveryone('exit-jail', player.name);
+      } else if (player.exitJailCards >= 1) {
+        this.socket[player.name].emit(
           'choice',
           'Voulez vous utilisez la carte "Sortir de Prison" ?',
           ['Oui', 'Non']
         );
         did = false;
-        this.socket[player.getName()].once(
-          'response-choice',
-          (response: number) => {
-            if (response === 0) {
-              player.setJailTurn(0);
-              player.setInJail(false);
-              this.emitToEveryone('exit-jail', player.getName());
-              player.setExitJailCards(player.getExitJailCards() - 1);
-            } else {
-              newPos = 10;
-              this.emitToEveryone('is-in-jail', player.getName());
-            }
-            player.setPosition(newPos);
-            const done = this.handlePlayerLand(oldPos, Utils.sum(...dices));
-            if (done) {
-              if (player.isBroke()) {
-                this.emitToEveryone('player-broke', player.getName());
-                this.players.splice(this.players.indexOf(player), 1);
-                this.turn--;
-                this.spectators.push(player.getName());
-              }
-              this.nextTurn();
-            } else {
-              this.once('done', () => {
-                if (player.isBroke()) {
-                  this.emitToEveryone('player-broke', player.getName());
-                  this.players.splice(this.players.indexOf(player), 1);
-                  this.turn--;
-                  this.spectators.push(player.getName());
-                }
-                this.nextTurn();
-              });
-            }
+        this.socket[player.name].once('response-choice', async (response: number) => {
+          if (response === 0) {
+            player.jailTurn = 0;
+            player.inJail = false;
+            this.emitToEveryone('exit-jail', player.name);
+            player.exitJailCards -= 1;
+          } else {
+            newPos = 10;
+            this.emitToEveryone('is-in-jail', player.name);
           }
-        );
+          player.position = newPos;
+          await this.handlePlayerLand(oldPos, Utils.sum(...dices));
+            if (player.isBroke) {
+              this.emitToEveryone('player-broke', player.name);
+              this.players.splice(this.players.indexOf(player), 1);
+              this.turn--;
+              this.spectators.push(player.name);
+            }
+            this.nextTurn();
+        });
       } else {
         newPos = 10;
-        this.emitToEveryone('is-in-jail', player.getName());
+        this.emitToEveryone('is-in-jail', player.name);
       }
     }
     if (did) {
-      player.setPosition(newPos);
+      player.position = newPos;
       const done = this.handlePlayerLand(oldPos, Utils.sum(...dices));
       if (done) {
-        if (player.isBroke()) {
-          this.emitToEveryone('player-broke', player.getName());
+        if (player.isBroke) {
+          this.emitToEveryone('player-broke', player.name);
           this.players.splice(this.players.indexOf(player), 1);
           this.turn--;
-          this.spectators.push(player.getName());
+          this.spectators.push(player.name);
         }
         this.nextTurn();
       } else {
         this.once('done', () => {
-          if (player.isBroke()) {
-            this.emitToEveryone('player-broke', player.getName());
+          if (player.isBroke) {
+            this.emitToEveryone('player-broke', player.name);
             this.players.splice(this.players.indexOf(player), 1);
             this.turn--;
-            this.spectators.push(player.getName());
+            this.spectators.push(player.name);
           }
           this.nextTurn();
         });
@@ -307,9 +265,9 @@ export default class Game extends Eventable {
 
   public handlePlayerLand(oldPos: number, dice: number) {
     const player = this.getPlayerTurn();
-    const position = player.getPosition();
-    if (oldPos > position) player.setAccount(player.getAccount() + 200);
-    return Actions.execute(
+    const position = player.position;
+    if (oldPos > position) player.account += 200;
+    return BoardService(
       this,
       Board.cells.find((cell) => cell.position === position)!,
       dice
@@ -355,7 +313,7 @@ export default class Game extends Eventable {
     if (current < this.players.length) this.turn++;
     else this.turn = 0;
     this.update();
-    this.socket[this.getPlayerTurn().getName()].once('roll-dice', () =>
+    this.socket[this.getPlayerTurn().name].once('roll-dice', () =>
       this.diceRolled()
     );
   }
@@ -364,7 +322,7 @@ export default class Game extends Eventable {
     const dices = Utils.rollDice(2);
     for (const player in this.socket) {
       const socket = this.socket[player];
-      socket.emit('dice-roll', this.getPlayerTurn().getName(), dices);
+      socket.emit('dice-roll', this.getPlayerTurn().name, dices);
     }
     this.diceRoll(dices);
   }
@@ -378,7 +336,7 @@ export default class Game extends Eventable {
       houses: this.houses,
       players: this.players.map((p) => JSON.parse(p.toJSON())),
       spectating: this.spectators.length,
-      turn: this.getPlayerTurn().getName(),
+      turn: this.getPlayerTurn().name,
       id: this.id,
       started: this.started
     };
