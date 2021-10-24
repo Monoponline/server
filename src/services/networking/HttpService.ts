@@ -10,7 +10,7 @@ import PlayerService from '../player/PlayerService';
 
 export default class HttpService {
   public engine: core.Express;
-  public server: http.Server | https.Server;
+  public server: http.Server;
   public wsService: SocketService;
   public players = [] as string[];
 

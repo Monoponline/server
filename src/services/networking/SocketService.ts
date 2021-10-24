@@ -5,7 +5,7 @@ import UserSocketService, { UserSocket } from './UserSocketService';
 
 export default class SocketService {
   public engine: Server;
-  constructor(server: http.Server | https.Server) {
+  constructor(server: http.Server) {
     this.engine = new Server(server, {
       cors: {
         origin: '*', //https://monoponline.skydonald.com
