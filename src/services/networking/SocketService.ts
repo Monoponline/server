@@ -1,7 +1,6 @@
 import http from 'http';
-import https from 'https';
 import { Server } from 'socket.io';
-import UserSocketService, { UserSocket } from './UserSocketService';
+import UserSocketService from './UserSocketService';
 
 export default class SocketService {
   public engine: Server;
