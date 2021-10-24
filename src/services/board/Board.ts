@@ -557,29 +557,29 @@ const Board = {
       title: 'Payez une amende de 10€ ou bien tirez une carte "CHANCE"',
       action: async (game, player) => {
         return new Promise((r) => {
-            game.socket[player.name].emit(
-                'choice',
-                'Payez une amende de 10€ ou bien tirez une carte "CHANCE"',
-                ['Payer une amende', 'Tirer une carte "CHANCE"']
-              );
-              game.socket[player.name].once('response-choice', (choice: number) => {
-                if (choice === 0) {
-                  player.account -= 10;
-                  game.emitToEveryone('fine', player.name, 10);
-                  r()
-                } else if (choice === 1) {
-                  const chanceCard =
-                    Board.chanceDeck[
-                      Math.floor(Math.random() * Board.chanceDeck.length)
-                    ];
-                  game.emitToUser(player.name, 'chance-card', chanceCard.title);
-                  chanceCard.action(game, player).then(r);
-                } else {
-                  player.account -= 10;
-                  game.emitToEveryone('fine', player.name, 10);
-                  r()
-                }
-              });
+          game.socket[player.name].emit(
+            'choice',
+            'Payez une amende de 10€ ou bien tirez une carte "CHANCE"',
+            ['Payer une amende', 'Tirer une carte "CHANCE"']
+          );
+          game.socket[player.name].once('response-choice', (choice: number) => {
+            if (choice === 0) {
+              player.account -= 10;
+              game.emitToEveryone('fine', player.name, 10);
+              r();
+            } else if (choice === 1) {
+              const chanceCard =
+                Board.chanceDeck[
+                  Math.floor(Math.random() * Board.chanceDeck.length)
+                ];
+              game.emitToUser(player.name, 'chance-card', chanceCard.title);
+              chanceCard.action(game, player).then(r);
+            } else {
+              player.account -= 10;
+              game.emitToEveryone('fine', player.name, 10);
+              r();
+            }
+          });
         });
       }
     },

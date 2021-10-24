@@ -1,5 +1,7 @@
 import Type from '../../utils/Type';
+import Utils from '../../utils/Utils';
 import Game from '../game/Game';
+import Player from '../player/Player';
 import Board, { Cell } from './Board';
 
 export default async function BoardService(
@@ -23,16 +25,16 @@ export default async function BoardService(
               'response-choice',
               (choice: number) => {
                 if (choice === 0) {
-                  player.addProperty(cell.position);
+                  player.properties.push(cell.position);
                   player.account -= cell.price!;
                   game.emitToEveryone('buy-house', player.name, cell.name);
                 }
-                r()
+                r();
               }
             );
           } else {
             game.emitToEveryone('cant-afford', player.name, cell.name);
-            r()
+            r();
           }
         } else {
           if (renter.name === player.name) r();
@@ -41,7 +43,7 @@ export default async function BoardService(
           renter.account += rent;
           player.account -= rent;
           game.emitToEveryone('paid-rent', player.name, renter.name, rent);
-          r()
+          r();
         }
         break;
       case Type.STATION:
@@ -56,16 +58,16 @@ export default async function BoardService(
               'response-choice',
               (choice: number) => {
                 if (choice === 0) {
-                  player.addProperty(cell.position);
+                  player.properties.push(cell.position);
                   player.account -= 200;
                   game.emitToEveryone('buy-house', player.name, cell.name);
                 }
-                r()
+                r();
               }
             );
           } else {
             game.emitToEveryone('cant-afford', player.name, cell.name);
-            r()
+            r();
           }
         } else {
           if (renter.name === player.name) r();
@@ -74,7 +76,7 @@ export default async function BoardService(
           renter.account += rent;
           player.account -= rent;
           game.emitToEveryone('paid-rent', player.name, renter.name, rent);
-          r()
+          r();
         }
         break;
       case Type.UTILITY:
@@ -89,16 +91,16 @@ export default async function BoardService(
               'response-choice',
               (choice: number) => {
                 if (choice === 0) {
-                  player.addProperty(cell.position);
+                  player.properties.push(cell.position);
                   player.account -= 150;
                   game.emitToEveryone('buy-house', player.name, cell.name);
                 }
-                r()
+                r();
               }
             );
           } else {
             game.emitToEveryone('cant-afford', player.name, cell.name);
-            r()
+            r();
           }
         } else {
           if (renter.name === player.name) r();
@@ -107,7 +109,7 @@ export default async function BoardService(
           renter.account += rent;
           player.account -= rent;
           game.emitToEveryone('paid-rent', player.name, renter.name, rent);
-          r()
+          r();
         }
         break;
       case Type.SPECIAL:
@@ -129,4 +131,83 @@ export default async function BoardService(
         break;
     }
   });
+}
+
+export async function runDice(game: Game, dices: number[]) {
+  const player = game.getPlayerTurn();
+  const oldPos = player.position;
+  let newPos = player.position + Utils.sum(...dices);
+  if (newPos > 39) newPos = newPos - 40;
+  if (player.inJail) {
+    player.jailTurn -= 1;
+
+    if (player.jailTurn <= 0) {
+      player.jailTurn = 0;
+      player.inJail = false;
+      game.emitToEveryone('exit-jail', player.name);
+      endTurn(player, game, oldPos, dices, newPos);
+    } else if (player.exitJailCards >= 1) {
+      game.socket[player.name].emit(
+        'choice',
+        'Voulez vous utilisez la carte "Sortir de Prison" ?',
+        ['Oui', 'Non']
+      );
+      game.socket[player.name].once(
+        'response-choice',
+        async (response: number) => {
+          if (response === 0) {
+            player.jailTurn = 0;
+            player.inJail = false;
+            game.emitToEveryone('exit-jail', player.name);
+            player.exitJailCards -= 1;
+          } else {
+            newPos = 10;
+            game.emitToEveryone('is-in-jail', player.name);
+          }
+          endTurn(player, game, oldPos, dices, newPos);
+        }
+      );
+    } else {
+      game.socket[player.name].emit(
+        'choice',
+        'Voulez vous payez 50€ pour sortie de Prison ?',
+        ['Oui', 'Non']
+      );
+      game.socket[player.name].once(
+        'response-choice',
+        async (response: number) => {
+          if (response === 0) {
+            player.jailTurn = 0;
+            player.inJail = false;
+            game.emitToEveryone('exit-jail', player.name);
+            player.account -= 50;
+          } else {
+            newPos = 10;
+            game.emitToEveryone('is-in-jail', player.name);
+          }
+          endTurn(player, game, oldPos, dices, newPos);
+        }
+      );
+    }
+  } else {
+    endTurn(player, game, oldPos, dices, newPos);
+  }
+}
+
+async function endTurn(
+  player: Player,
+  game: Game,
+  oldPos: number,
+  dices: number[],
+  newPos: number
+) {
+  player.position = newPos;
+  await game.handlePlayerLand(oldPos, Utils.sum(...dices));
+  if (player.isBroke) {
+    game.emitToEveryone('player-broke', player.name);
+    game.players.splice(game.players.indexOf(player), 1);
+    game.turn--;
+    game.spectators.push(player.name);
+  }
+  game.nextTurn();
 }
