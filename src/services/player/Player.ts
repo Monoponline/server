@@ -110,13 +110,16 @@ export default class Player {
     )
       return;
     if (this.canAfford(price)) {
-
-      if (game.getCellHouses(cell) === 4 && game.bankService.hotelLeft === 0) return game.socket[this.name].emit('cant-upgrade');
-      if (game.getCellHouses(cell) !== 4 && game.bankService.houseLeft === 0) return game.socket[this.name].emit('cant-upgrade');
+      if (game.getCellHouses(cell) === 4 && game.bankService.hotelLeft === 0)
+        return game.socket[this.name].emit('cant-upgrade');
+      if (game.getCellHouses(cell) !== 4 && game.bankService.houseLeft === 0)
+        return game.socket[this.name].emit('cant-upgrade');
 
       if (game.getCellHouses(cell) === 4) {
         game.bankService.hotelLeft--;
         game.bankService.houseLeft += 4;
+      } else {
+        game.bankService.houseLeft--;
       }
 
       const house = game.houses.find((h) => h.cell === cell);
@@ -130,7 +133,7 @@ export default class Player {
       game.socket[this.name].emit('bought-house', Board.cells[cell].name);
       game.update();
     } else {
-      game.emitToEveryone('cant-afford', this, `${cell} maisons`);
+      game.emitToEveryone('cant-afford', this.name, `${cell} maisons`);
     }
   };
 
@@ -155,6 +158,12 @@ export default class Player {
     game.socket[this.name].emit('sold-house', Board.cells[cell].name);
     game.update();
   };
+
+  public mortgageProperty(cell: number) {
+    const game = GameService.instance.getPlayerGame(this.name);
+  }
+
+  public unmortgageProperty(cell: number) {}
 
   public toJSON() {
     return JSON.stringify({

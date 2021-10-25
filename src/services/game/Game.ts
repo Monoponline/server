@@ -1,11 +1,14 @@
-import { Socket } from 'socket.io/dist/socket';
-import { DefaultEventsMap } from 'socket.io/dist/typed-events';
+import { EventParams } from 'socket.io/dist/typed-events';
 import Utils from '../../utils/Utils';
 import Eventable from '../../utils/Eventable';
 import Board from '../board/Board';
 import BoardService, { runDice } from '../board/BoardService';
 import Player from '../player/Player';
 import BankService from '../bank/BankService';
+import {
+  UserSocket,
+  UserSocketEmitEventsMap
+} from '../networking/UserSocketService';
 
 export default class Game extends Eventable {
   public takenAvatars = [] as string[];
@@ -16,11 +19,7 @@ export default class Game extends Eventable {
   public turn = 0;
   public houses = [] as Houses[];
   public socket: {
-    [username: string]: Socket<
-      DefaultEventsMap,
-      DefaultEventsMap,
-      DefaultEventsMap
-    >;
+    [username: string]: UserSocket;
   } = {};
 
   public bankService: BankService;
@@ -43,10 +42,7 @@ export default class Game extends Eventable {
     return this.players.map((p) => p.name);
   }
 
-  public join(
-    player: string,
-    socket: Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap>
-  ) {
+  public join(player: string, socket: UserSocket) {
     if (this.getPlayerList().includes(player)) return;
     if (this.players.length < 4 && !this.started) {
       this.players.push(new Player(player));
@@ -123,6 +119,8 @@ export default class Game extends Eventable {
       socket.on('trade-request', player.tradeRequest);
       socket.on('buy-property', player.buyProperty);
       socket.on('sell-property', player.sellProperty);
+      socket.on('mortgage-property', player.mortgageProperty);
+      socket.on('unmortgage-property', player.unmortgageProperty);
     }
   }
 
@@ -149,14 +147,21 @@ export default class Game extends Eventable {
     return 0;
   }
 
-  public emitToEveryone(event: string, ...args: any[]) {
+  public emitToEveryone<Ev extends keyof UserSocketEmitEventsMap>(
+    event: Ev,
+    ...args: EventParams<UserSocketEmitEventsMap, Ev>
+  ) {
     for (const player in this.socket) {
       const socket = this.socket[player];
       socket.emit(event, ...args);
     }
   }
 
-  public emitToUser(player: string, event: string, ...args: any[]) {
+  public emitToUser<Ev extends keyof UserSocketEmitEventsMap>(
+    player: string,
+    event: Ev,
+    ...args: EventParams<UserSocketEmitEventsMap, Ev>
+  ) {
     const socket = this.socket[player];
     socket?.emit(event, ...args);
   }
@@ -185,13 +190,13 @@ export default class Game extends Eventable {
     );
   }
 
-  public diceRolled() {
+  public async diceRolled() {
     const dices = Utils.rollDice(2);
     for (const player in this.socket) {
       const socket = this.socket[player];
       socket.emit('dice-roll', this.getPlayerTurn().name, dices);
     }
-    runDice(this, dices);
+    await runDice(this, dices);
   }
 
   public toString() {

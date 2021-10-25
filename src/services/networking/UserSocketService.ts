@@ -72,7 +72,58 @@ export default class UserSocketService {
 }
 
 export type UserSocket = Socket<
-  DefaultEventsMap,
-  DefaultEventsMap,
-  DefaultEventsMap
+  UserSocketListenEventsMap,
+  UserSocketEmitEventsMap
+>;
+
+export interface UserSocketListenEventsMap {
+  'roll-dice': () => void;
+  'leave-game': () => void;
+  'player-start': () => void;
+  'buy-property': (cell: number) => void;
+  'sell-property': (cell: number) => void;
+  'response-trade': (accept: boolean) => void;
+  'response-choice': (choice: number) => void;
+  'mortgage-property': (cell: number) => void;
+  'trade-request': (tradeJSON: string) => void;
+  'request-join-game': (gameId: string) => void;
+  'unmortgage-property': (cell: number) => void;
+}
+
+export interface UserSocketEmitEventsMap {
+  win: () => void;
+  'cant-sell': () => void;
+  'cant-upgrade': () => void;
+  'canceled-trade': () => void;
+  'trade-req-sent': () => void;
+  'cc-card': (title: string) => void;
+  'left-game': (player: string) => void;
+  'exit-jail': (player: string) => void;
+  'paid-taxes': (player: string) => void;
+  'is-in-jail': (player: string) => void;
+  'chance-card': (title: string) => void;
+  'friend-gift': (player: string) => void;
+  'player-broke': (player: string) => void;
+  'player-in-jail': (player: string) => void;
+  'sold-house': (propertyName: string) => void;
+  'paid-luxury-taxe': (player: string) => void;
+  'game-state': (gameStateJSON: string) => void;
+  'bought-house': (propertyName: string) => void;
+  fine: (player: string, money: number) => void;
+  earn: (player: string, money: number | string) => void;
+  'buy-house': (player: string, cell: string) => void;
+  'player-move': (player: string, cell: string) => void;
+  'cant-afford': (player: string, cell: string) => void;
+  'dice-roll': (player: string, dices: number[]) => void;
+  'trade-req': (name: string, tradeJSON: string) => void;
+  choice: (question: string, responses: string[]) => void;
+  'joined-game': (gameId: string, asSpectator?: boolean) => void;
+  'paid-rent': (player: string, renter: string, rent: number) => void;
+}
+
+export type Callback<T extends any[]> = Function<T, void>;
+export type Function<T extends any[], K extends any> = (...args: T) => K;
+export type AsyncFunction<T extends any[], K extends any> = Function<
+  T,
+  Promise<K>
 >;
