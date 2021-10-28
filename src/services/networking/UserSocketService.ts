@@ -17,7 +17,12 @@ export default class UserSocketService {
   }
 
   public checkError() {
-    if (!Utils.isSocketValid(this.socket))
+    if (
+      !Utils.isSocketValid(this.socket) ||
+      PlayerService.instance.contains(
+        this.socket.handshake.query['username'] as string
+      )
+    )
       return void this.socket.disconnect(true);
     return this;
   }
@@ -37,6 +42,7 @@ export default class UserSocketService {
   };
 
   private requestJoinGameListener = (gameId: string) => {
+    if (this.game) return;
     this.game = GameService.instance.get(gameId);
     if (!this.game) {
       this.game = new Game(gameId);
@@ -92,11 +98,13 @@ export interface UserSocketListenEventsMap {
 
 export interface UserSocketEmitEventsMap {
   win: () => void;
+  start: () => void;
   'cant-sell': () => void;
   'cant-upgrade': () => void;
   'canceled-trade': () => void;
   'trade-req-sent': () => void;
   'cc-card': (title: string) => void;
+  'user-join': (player: string) => void;
   'left-game': (player: string) => void;
   'exit-jail': (player: string) => void;
   'paid-taxes': (player: string) => void;
@@ -105,19 +113,23 @@ export interface UserSocketEmitEventsMap {
   'friend-gift': (player: string) => void;
   'player-broke': (player: string) => void;
   'player-in-jail': (player: string) => void;
+  'not-mortgaged': (property: string) => void;
   'sold-house': (propertyName: string) => void;
   'paid-luxury-taxe': (player: string) => void;
   'game-state': (gameStateJSON: string) => void;
-  'bought-house': (propertyName: string) => void;
   fine: (player: string, money: number) => void;
-  earn: (player: string, money: number | string) => void;
+  'bought-house': (propertyName: string) => void;
+  'already-mortgaged': (property: string) => void;
   'buy-house': (player: string, cell: string) => void;
   'player-move': (player: string, cell: string) => void;
   'cant-afford': (player: string, cell: string) => void;
+  earn: (player: string, money: number | string) => void;
   'dice-roll': (player: string, dices: number[]) => void;
   'trade-req': (name: string, tradeJSON: string) => void;
   choice: (question: string, responses: string[]) => void;
   'joined-game': (gameId: string, asSpectator?: boolean) => void;
+  'mortgage-property': (player: string, property: string) => void;
+  'unmortgage-property': (player: string, property: string) => void;
   'paid-rent': (player: string, renter: string, rent: number) => void;
 }
 

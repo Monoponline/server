@@ -47,12 +47,15 @@ export default class Game extends Eventable {
     if (this.players.length < 4 && !this.started) {
       this.players.push(new Player(player));
       socket.emit('joined-game', this.id);
+      this.emitToEveryone('user-join', player);
     } else {
       this.spectators.push(player);
       socket.emit('joined-game', this.id, true);
     }
     this.socket[player] = socket;
-    this.update();
+    setTimeout(() => {
+      this.update();
+    }, 250);
     if (this.players.length === 4) this.start();
   }
 
@@ -64,7 +67,8 @@ export default class Game extends Eventable {
     if (this.spectators.includes(player))
       this.spectators.splice(this.spectators.indexOf(player), 1);
     delete this.socket[player];
-    if (this.players.length < 2) return this.stop();
+    if (this.players.length < 2 && this.started) return this.stop();
+    this.emitToEveryone('left-game', player);
     this.update();
   }
 
@@ -101,11 +105,8 @@ export default class Game extends Eventable {
       this.takenAvatars.push(avatar);
       player.avatar = avatar;
     }
-    for (const player in this.socket) {
-      const socket = this.socket[player];
-      socket.emit('game-state', this.toString());
-    }
-    this.emit('start');
+    this.update();
+    this.emitToEveryone('start');
     this.socket[this.getPlayerTurn().name].once('roll-dice', () =>
       this.diceRolled()
     );
@@ -208,7 +209,7 @@ export default class Game extends Eventable {
       houses: this.houses,
       players: this.players.map((p) => JSON.parse(p.toJSON())),
       spectating: this.spectators.length,
-      turn: this.getPlayerTurn().name,
+      turn: this.getPlayerTurn()?.name ?? '',
       id: this.id,
       started: this.started
     };
@@ -220,8 +221,8 @@ export default class Game extends Eventable {
       players: [],
       spectating: 0,
       turn: '',
-      id: this.id,
-      started: false
+      started: false,
+      id: this.id
     } as GameState;
   }
 

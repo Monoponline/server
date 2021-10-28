@@ -46,7 +46,7 @@ export default class HttpService {
     });
     this.engine.get('/is-username-taken', (req, res) => {
       res.json(
-        PlayerService.instance.contains(req.params['username'] as string)
+        PlayerService.instance.contains(req.query['username'] as string)
       );
     });
 

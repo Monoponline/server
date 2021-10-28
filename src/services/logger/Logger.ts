@@ -1,4 +1,5 @@
 import 'colors';
+import { stripColors } from 'colors';
 import { createWriteStream, readFileSync } from 'fs';
 
 export default class Logger {
@@ -25,7 +26,7 @@ export default class Logger {
       }
     }
 
-    const info = Logger._getInfo();
+    // const info = Logger._getInfo();
 
     const d = new Date();
     let month: string | number = d.getMonth() + 1;
@@ -38,16 +39,15 @@ export default class Logger {
     if (minutes < 10) minutes = `0${minutes}`;
     let sec: string | number = d.getSeconds();
     if (sec < 10) sec = `0${sec}`;
-    const now = `${d.getFullYear()}/${month}/${date} ${hour}:${minutes}:${sec}`;
+    const now = ` ${d.getFullYear()}/${month}/${date} ${hour}:${minutes}:${sec} `;
+    // ${info.bgYellow.black}
+    const log = `${now.bgGreen.black.bold} ${text.join(' ').cyan}`;
 
-    const log = `[${now.yellow}] [${info.blue}] ${text.join(' ').magenta}`;
-    const offColorLog = `[${now}] [${info}] ${text.join(' ')}`;
-
-    Logger.fileLog(offColorLog);
+    Logger.stream.write(stripColors(log) + '\n');
     console.log(log);
   }
 
-  private static _getInfo() {
+  /* private static _getInfo() {
     let info: string;
     try {
       throw new Error();
@@ -59,11 +59,7 @@ export default class Logger {
     }
 
     return info;
-  }
-
-  public static fileLog(log: string) {
-    Logger.stream.write(log + '\n');
-  }
+  } */
 
   public static init() {
     if (Logger.first) return;

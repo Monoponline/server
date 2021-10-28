@@ -161,9 +161,33 @@ export default class Player {
 
   public mortgageProperty(cell: number) {
     const game = GameService.instance.getPlayerGame(this.name);
+    if (game.bankService.mortgagedProperties.includes(cell))
+      return game.socket[this.name].emit(
+        'already-mortgaged',
+        Board.cells[cell].name
+      );
+    game.bankService.mortgagedProperties.push(cell);
+    this.account += Board.cells[cell].price / 2;
+    game.emitToEveryone('mortgage-property', this.name, Board.cells[cell].name);
+    game.update();
   }
 
-  public unmortgageProperty(cell: number) {}
+  public unmortgageProperty(cell: number) {
+    const game = GameService.instance.getPlayerGame(this.name);
+    if (!game.bankService.mortgagedProperties.includes(cell))
+      return game.socket[this.name].emit(
+        'not-mortgaged',
+        Board.cells[cell].name
+      );
+    game.bankService.mortgagedProperties.push(cell);
+    this.account -= Board.cells[cell].price;
+    game.emitToEveryone(
+      'unmortgage-property',
+      this.name,
+      Board.cells[cell].name
+    );
+    game.update();
+  }
 
   public toJSON() {
     return JSON.stringify({
