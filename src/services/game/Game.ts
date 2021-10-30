@@ -171,8 +171,8 @@ export default class Game extends Eventable {
     this.started = false;
     for (const player in this.socket) {
       const socket = this.socket[player];
+      socket.removeAllListeners();
       socket.emit('win');
-      delete this.socket[player];
     }
     this.emit('stop');
   }

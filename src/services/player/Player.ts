@@ -130,7 +130,7 @@ export default class Player {
             cell
           });
       this.account -= price;
-      game.socket[this.name].emit('bought-house', Board.cells[cell].name);
+      game.emitToEveryone('bought-house', this.name, Board.cells[cell].name);
       game.update();
     } else {
       game.emitToEveryone('cant-afford', this.name, `${cell} maisons`);

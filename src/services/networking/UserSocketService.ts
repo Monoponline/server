@@ -118,7 +118,6 @@ export interface UserSocketEmitEventsMap {
   'paid-luxury-taxe': (player: string) => void;
   'game-state': (gameStateJSON: string) => void;
   fine: (player: string, money: number) => void;
-  'bought-house': (propertyName: string) => void;
   'already-mortgaged': (property: string) => void;
   'buy-house': (player: string, cell: string) => void;
   'player-move': (player: string, cell: string) => void;
@@ -127,6 +126,7 @@ export interface UserSocketEmitEventsMap {
   'dice-roll': (player: string, dices: number[]) => void;
   'trade-req': (name: string, tradeJSON: string) => void;
   choice: (question: string, responses: string[]) => void;
+  'bought-house': (player: string, property: string) => void;
   'joined-game': (gameId: string, asSpectator?: boolean) => void;
   'mortgage-property': (player: string, property: string) => void;
   'unmortgage-property': (player: string, property: string) => void;
