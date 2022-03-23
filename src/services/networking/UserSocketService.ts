@@ -1,5 +1,5 @@
 import { Socket } from 'socket.io';
-import { DefaultEventsMap } from '../../../node_modules/socket.io/dist/typed-events';
+import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 import Utils from '../../utils/Utils';
 import Game from '../game/Game';
 import GameService from '../game/GameService';
@@ -7,8 +7,8 @@ import Logger from '../logger/Logger';
 import PlayerService from '../player/PlayerService';
 
 export default class UserSocketService {
-  private socket: UserSocket;
-  private username: string;
+  private readonly socket: UserSocket;
+  private readonly username: string;
   private game?: Game;
 
   constructor(socket: UserSocket) {
@@ -71,8 +71,4 @@ export default class UserSocketService {
   };
 }
 
-export type UserSocket = Socket<
-  DefaultEventsMap,
-  DefaultEventsMap,
-  DefaultEventsMap
->;
+export type UserSocket = Socket<DefaultEventsMap, DefaultEventsMap>;

@@ -1,3 +1,4 @@
+// @ts-ignore
 import EventEmitter from 'events';
 
 export default class Eventable {

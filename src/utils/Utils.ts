@@ -1,5 +1,6 @@
 import { Socket } from 'socket.io';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
+import { UserSocket } from '../services/networking/UserSocketService';
 
 export default class Utils {
   private static POSIBILITIES = [1, 2, 3, 4, 5, 6];
@@ -12,6 +13,14 @@ export default class Utils {
       );
     }
     return dices;
+  }
+
+  public static waitForResponseChoice(socket: UserSocket): Promise<number> {
+    return new Promise((r) => {
+      socket.once('response-choice', (choice: number) => {
+        r(choice);
+      });
+    });
   }
 
   public static isSocketValid(
@@ -29,7 +38,7 @@ export default class Utils {
     return result;
   }
 
-  public static areEquals(...objects: any[]) {
+  public static areEquals(...objects: any[]): boolean {
     for (let index = 0; index < objects.length; index++) {
       const element = objects[index];
       if (objects.find((o) => o !== element)) return false;

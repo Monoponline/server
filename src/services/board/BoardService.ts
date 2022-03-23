@@ -1,6 +1,6 @@
-import Type from '../../utils/Type';
 import Game from '../game/Game';
 import Board, { Cell } from './Board';
+import Type from './Type';
 
 export default async function BoardService(
   game: Game,
@@ -27,21 +27,21 @@ export default async function BoardService(
                   player.account -= cell.price!;
                   game.emitToEveryone('buy-house', player.name, cell.name);
                 }
-                r()
+                return r();
               }
             );
           } else {
             game.emitToEveryone('cant-afford', player.name, cell.name);
-            r()
+            return r();
           }
         } else {
-          if (renter.name === player.name) r();
+          if (renter.name === player.name) return r();
           const houses = game.getCellHouses(cell.position);
           const rent = cell.rent![houses];
           renter.account += rent;
           player.account -= rent;
           game.emitToEveryone('paid-rent', player.name, renter.name, rent);
-          r()
+          return r();
         }
         break;
       case Type.STATION:
@@ -60,21 +60,21 @@ export default async function BoardService(
                   player.account -= 200;
                   game.emitToEveryone('buy-house', player.name, cell.name);
                 }
-                r()
+                return r();
               }
             );
           } else {
             game.emitToEveryone('cant-afford', player.name, cell.name);
-            r()
+            return r();
           }
         } else {
-          if (renter.name === player.name) r();
+          if (renter.name === player.name) return r();
           const houses = renter.getStationsOwned() - 1;
           const rent = [25, 50, 100, 200][houses];
           renter.account += rent;
           player.account -= rent;
           game.emitToEveryone('paid-rent', player.name, renter.name, rent);
-          r()
+          return r();
         }
         break;
       case Type.UTILITY:
@@ -93,21 +93,21 @@ export default async function BoardService(
                   player.account -= 150;
                   game.emitToEveryone('buy-house', player.name, cell.name);
                 }
-                r()
+                return r();
               }
             );
           } else {
             game.emitToEveryone('cant-afford', player.name, cell.name);
-            r()
+            return r();
           }
         } else {
-          if (renter.name === player.name) r();
+          if (renter.name === player.name) return r();
           const houses = renter.getUtilitiesOwned() - 1;
           const rent = [dice * 4, dice * 10][houses];
           renter.account += rent;
           player.account -= rent;
           game.emitToEveryone('paid-rent', player.name, renter.name, rent);
-          r()
+          return r();
         }
         break;
       case Type.SPECIAL:

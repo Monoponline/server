@@ -68,7 +68,7 @@ export default class Logger {
   public static init() {
     if (Logger.first) return;
 
-    let file;
+    let file: Buffer;
     try {
       file = readFileSync(Logger.file);
     } catch (ignored) {}

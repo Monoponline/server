@@ -5,6 +5,8 @@ import Eventable from '../../utils/Eventable';
 import Board from '../board/Board';
 import BoardService from '../board/BoardService';
 import Player from '../player/Player';
+import { UserSocket } from '../networking/UserSocketService';
+import Type from '../board/Type';
 
 export default class Game extends Eventable {
   public takenAvatars = [] as string[];
@@ -15,11 +17,7 @@ export default class Game extends Eventable {
   public turn = 0;
   public houses = [] as Houses[];
   public socket: {
-    [username: string]: Socket<
-      DefaultEventsMap,
-      DefaultEventsMap,
-      DefaultEventsMap
-    >;
+    [username: string]: UserSocket;
   } = {};
 
   constructor(id: string) {
@@ -174,7 +172,11 @@ export default class Game extends Eventable {
           socket.emit('bought-house', Board.cells[cell].name);
           this.update();
         } else {
-          this.emitToEveryone('cant-afford', player, `${cell} maisons`);
+          this.emitToEveryone(
+            'cant-afford',
+            player,
+            `${Board.cells[cell].name} maisons`
+          );
         }
       });
       socket.on('sell-property', (cell: number) => {
@@ -193,9 +195,85 @@ export default class Game extends Eventable {
     return this.players[this.players.map((p) => p.name).indexOf(player)];
   }
 
-  public async diceRoll(dices: number[]) {
+  public async handlePlayerBroke() {
+    const player = this.getPlayerTurn();
+
+    while (player.isBroke) {
+      this.socket[player.name].emit(
+        'choice',
+        `Vous êtes ruiné, que voulez-vous vendre ?`,
+        ['Des maisons', 'Des propriétés', 'Abandonner']
+      );
+
+      const response = await Utils.waitForResponseChoice(
+        this.socket[player.name]
+      );
+      if (response == 0) {
+        const houses = player.properties
+          .filter((p) => this.getCellHouses(p) > 0)
+          .filter((p) => Board.cells[p].type == Type.PROPERTY);
+        this.socket[player.name].emit(
+          'choice',
+          `Sur quel propriété voulez vous vendre une maison ?`,
+          [...houses.map((p) => Board.cells[p].name), 'Annuler']
+        );
+
+        const r = await Utils.waitForResponseChoice(this.socket[player.name]);
+        if (r != houses.length) {
+          const property = houses[r];
+          const house = this.houses.find((h) => h.cell === property);
+          house.houses -= 1;
+          const price = Board.housesPrice[Board.cells[property].color];
+          player.account += price / 2;
+        }
+      } else if (response == 1) {
+        const houses = player.properties
+          .filter((p) => this.getCellHouses(p) > 0)
+          .filter((p) =>
+            [Type.PROPERTY, Type.STATION, Type.UTILITY].includes(
+              Board.cells[p].type
+            )
+          );
+        this.socket[player.name].emit(
+          'choice',
+          `Quel propriété voulez-vous vendre ? (Seule les propriétés sans maisons peuvent être hypothèqué)`,
+          [...houses.map((p) => Board.cells[p].name), 'Annuler']
+        );
+
+        const r = await Utils.waitForResponseChoice(this.socket[player.name]);
+        if (r != houses.length) {
+          const house = houses[r];
+          player.removeProperty(house);
+          player.mortgageProperty(house);
+          player.account += Board.cells[house].price / 2;
+        }
+      } else {
+        break;
+      }
+    }
+
+    if (player.isBroke) {
+      this.emitToEveryone('player-broke', player.name);
+      this.players.splice(this.players.indexOf(player), 1);
+      this.turn -= 1;
+      this.spectators.push(player.name);
+    }
+  }
+
+  public async endTurn(newPos: number, dices: number[]) {
     const player = this.getPlayerTurn();
     const oldPos = player.position;
+    player.position = newPos;
+
+    await this.handlePlayerLand(oldPos, Utils.sum(...dices));
+    if (player.isBroke) {
+      await this.handlePlayerBroke();
+    }
+    this.nextTurn();
+  }
+
+  public async diceRoll(dices: number[]) {
+    const player = this.getPlayerTurn();
     let newPos = player.position + Utils.sum(...dices);
     if (newPos > 39) newPos = newPos - 40;
     let did = true;
@@ -213,68 +291,43 @@ export default class Game extends Eventable {
           ['Oui', 'Non']
         );
         did = false;
-        this.socket[player.name].once('response-choice', async (response: number) => {
-          if (response === 0) {
-            player.jailTurn = 0;
-            player.inJail = false;
-            this.emitToEveryone('exit-jail', player.name);
-            player.exitJailCards -= 1;
-          } else {
-            newPos = 10;
-            this.emitToEveryone('is-in-jail', player.name);
-          }
-          player.position = newPos;
-          await this.handlePlayerLand(oldPos, Utils.sum(...dices));
-            if (player.isBroke) {
-              this.emitToEveryone('player-broke', player.name);
-              this.players.splice(this.players.indexOf(player), 1);
-              this.turn--;
-              this.spectators.push(player.name);
+        this.socket[player.name].once(
+          'response-choice',
+          async (response: number) => {
+            if (response === 0) {
+              player.jailTurn = 0;
+              player.inJail = false;
+              this.emitToEveryone('exit-jail', player.name);
+              player.exitJailCards -= 1;
+            } else {
+              newPos = 10;
+              this.emitToEveryone('is-in-jail', player.name);
             }
-            this.nextTurn();
-        });
+            await this.endTurn(newPos, dices);
+          }
+        );
       } else {
         newPos = 10;
         this.emitToEveryone('is-in-jail', player.name);
       }
     }
     if (did) {
-      player.position = newPos;
-      const done = this.handlePlayerLand(oldPos, Utils.sum(...dices));
-      if (done) {
-        if (player.isBroke) {
-          this.emitToEveryone('player-broke', player.name);
-          this.players.splice(this.players.indexOf(player), 1);
-          this.turn--;
-          this.spectators.push(player.name);
-        }
-        this.nextTurn();
-      } else {
-        this.once('done', () => {
-          if (player.isBroke) {
-            this.emitToEveryone('player-broke', player.name);
-            this.players.splice(this.players.indexOf(player), 1);
-            this.turn--;
-            this.spectators.push(player.name);
-          }
-          this.nextTurn();
-        });
-      }
+      await this.endTurn(newPos, dices);
     }
   }
 
-  public handlePlayerLand(oldPos: number, dice: number) {
+  public async handlePlayerLand(oldPos: number, dice: number) {
     const player = this.getPlayerTurn();
     const position = player.position;
     if (oldPos > position) player.account += 200;
-    return BoardService(
+    return await BoardService(
       this,
       Board.cells.find((cell) => cell.position === position)!,
       dice
     );
   }
 
-  public getCellHouses(position: number) {
+  public getCellHouses(position: number): number {
     const state = this.getGameState();
     for (const house of state.houses) {
       if (house.cell === position) return house.houses;

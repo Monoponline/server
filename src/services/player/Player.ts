@@ -17,6 +17,7 @@ export default class Player {
   public jailTurn = 0;
   public exitJailCards = 0;
   public properties = [] as number[];
+  public mortgagedProperties = [] as number[];
   public account = 1500;
 
   constructor(name: string) {
@@ -31,6 +32,17 @@ export default class Player {
 
   public removeProperty(property: number) {
     this.properties.splice(this.properties.indexOf(property), 1);
+  }
+
+  public mortgageProperty(property: number) {
+    this.mortgagedProperties.push(property);
+  }
+
+  public unmortgageProperty(property: number) {
+    this.mortgagedProperties.splice(
+      this.mortgagedProperties.indexOf(property),
+      1
+    );
   }
 
   public get isBroke() {

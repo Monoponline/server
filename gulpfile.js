@@ -2,7 +2,6 @@ const del = require('del');
 const gulp = require('gulp');
 const esbuild = require('gulp-esbuild');
 const { exec } = require('child_process');
-// const tsc = require('gulp-typescript');
 
 function clean () {
   return del(['dist/**/*']);
@@ -20,12 +19,6 @@ function build () {
     }))
     .pipe(gulp.dest('dist'));
 }
-
-// function build () {
-//   return gulp.src('src/**/*.ts')
-//     .pipe(tsc('tsconfig.json'))
-//     .pipe(gulp.dest('dist'));
-// }
 
 function watch (cb) {
   exec('nodemon dist/index', cb);

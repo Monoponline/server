@@ -1,9 +1,11 @@
-import * as core from 'express-serve-static-core';
+// @ts-ignore
 import express from 'express';
+// @ts-ignore
 import cors from 'cors';
-import fs from 'fs';
-import http from 'http';
-import https from 'https';
+import * as core from 'express-serve-static-core';
+import * as fs from 'fs';
+import * as http from 'http';
+import * as https from 'https';
 import Logger from '../logger/Logger';
 import SocketService from './SocketService';
 import PlayerService from '../player/PlayerService';
@@ -46,11 +48,9 @@ export default class HttpService {
     });
     this.engine.get('/is-username-taken', (req, res) => {
       res.json(
-        PlayerService.instance.contains(req.params['username'] as string)
+        PlayerService.instance.contains(req.query['username'] as string)
       );
     });
-
-    this.wsService.start();
 
     this.server.listen(process.env.PORT, () => {
       Logger.log('Listening to port:', process.env.PORT);
