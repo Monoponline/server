@@ -1,11 +1,10 @@
 import * as http from 'http';
-import * as https from 'https';
 import { Server } from 'socket.io';
 import UserSocketService from './UserSocketService';
 
 export default class SocketService {
   public engine: Server;
-  constructor(server: http.Server | https.Server) {
+  constructor(server: http.Server) {
     this.engine = new Server(server, {
       cors: {
         origin: '*', //https://monoponline.skydonald.com
