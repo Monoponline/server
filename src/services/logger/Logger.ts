@@ -1,5 +1,6 @@
 import 'colors';
 import { createWriteStream, readFileSync } from 'fs';
+import { stripColors } from 'colors';
 
 export default class Logger {
   private static file = `./logs/${new Date()
@@ -41,9 +42,8 @@ export default class Logger {
     const now = `${d.getFullYear()}/${month}/${date} ${hour}:${minutes}:${sec}`;
 
     const log = `[${now.yellow}] [${info.blue}] ${text.join(' ').magenta}`;
-    const offColorLog = `[${now}] [${info}] ${text.join(' ')}`;
 
-    Logger.fileLog(offColorLog);
+    Logger.fileLog(stripColors(log));
     console.log(log);
   }
 
